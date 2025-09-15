@@ -1,0 +1,18 @@
+[package]
+name = "autosar-e2e"
+version = "0.1.0"
+edition = "2021"
+authors = ["DoHun Han <dohun.han1221@gmail.com>"]
+description = "AUTOSAR E2E (End-to-End) Protection Library implementation in Rust"
+repository = "https://github.com/handohun/autosar-e2e"
+license = "MIT OR Apache-2.0"
+keywords = ["autosar", "e2e", "safety", "automotive", "protection"]
+categories = ["embedded", "encoding"]
+readme = "README.md"
+
+[dependencies]
+crc = "3.0"
+thiserror = "1.0"
+
+[features]
+default = []
