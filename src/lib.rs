@@ -20,8 +20,9 @@
 //!
 //! // Create a Profile 11 configuration
 //! let config = Profile11Config {
-//!     mode: Profile11IdMode::Nibble(0x1A34),
+//!     mode: Profile11IdMode::Nibble,
 //!     max_delta_counter: 1,
+//!     data_length: 40,
 //!     ..Default::default()
 //! };
 //!
