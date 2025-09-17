@@ -21,7 +21,7 @@
 
 // INCLUDE
 use crate::{E2EError, E2EProfile, E2EResult, E2EStatus};
-use crc::{Crc, CRC_8_SAE_J1850};
+use crc::{Crc, Algorithm};
 
 // CONSTANT
 const COUNTER_MASK: u8 = 0x0F;
@@ -30,6 +30,8 @@ const LOWER_NIBBLE_MASK: u8 = 0x0F;
 const MAX_COUNTER_VALUE: u8 = 0x0E;
 const MIN_DATA_LENGTH: usize = 2;
 const DEFAULT_MAX_DATA_LENGTH: usize = 240;
+// profile 11 use CRC_8_SAE_J1850 but with different init and xorout value, so algo is defined
+const CRC8_ALGO: Algorithm<u8> = Algorithm { width: 8, poly: 0x1d, init: 0x00, refin: false, refout: false, xorout: 0x00, check: 0x4b, residue: 0xc4 };
 
 /// Data-ID mode for Profile 11.
 /// 
@@ -119,7 +121,7 @@ impl Profile11 {
                 digest.update(&id.to_le_bytes());
             }
             Profile11IdMode::Nibble(id) => {
-                digest.update(&[id.to_le_bytes()[0]]);
+                digest.update(&[id.to_le_bytes()[0], 0x00]);
             }
         }
     }
@@ -133,7 +135,7 @@ impl Profile11 {
         nibble | (self.counter & LOWER_NIBBLE_MASK)
     }
     fn calculate_crc(&self, data: &[u8]) -> u8 {
-        let crc: Crc<u8> = Crc::<u8>::new(&CRC_8_SAE_J1850);
+        let crc: Crc<u8> = Crc::<u8>::new(&CRC8_ALGO);
         let mut digest = crc.digest();
         self.update_crc_with_id(&mut digest);
         digest.update(&data[1..]);
@@ -488,5 +490,20 @@ mod tests {
         // panic!
         Profile11::new(config);
     }
+    #[test]
+    fn test_profile11_autosar_example() {
+        let config = Profile11Config {
+            max_delta_counter : 1,
+            mode : Profile11IdMode::Both(0x123),
+            ..Default::default()
+        };
 
+        let mut profile_tx = Profile11::new(config.clone());
+        let mut profile_rx = Profile11::new(config);
+
+        let mut data1 = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        profile_tx.protect(&mut data1).unwrap();
+        assert_eq!(data1[0], 0x91);
+        assert_eq!(profile_rx.check(&data1).unwrap(), E2EStatus::Ok);
+    }
 }
