@@ -41,7 +41,8 @@ use autosar_e2e::profile11::{Profile11, Profile11Config, Profile11Variant};
 fn main() -> E2EResult<()> {
     // Configure Profile 11
     let config = Profile11Config {
-        mode: Profile11IdMode::Nibble(0x1A34),
+        mode: Profile11IdMode::Nibble,
+        data_id : 0x123,
         max_delta_counter: 1,
         ..Default::default()
     };
@@ -51,7 +52,7 @@ fn main() -> E2EResult<()> {
     let mut receiver = Profile11::new(config);
 
     // Prepare data to send
-    let mut data = vec![0x00, 0x00, 0x12, 0x34, 0x56, 0x78]; // [CRC, counter, user data ..]
+    let mut data = vec![0x00, 0x00, 0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC]; // [CRC, counter, user data ..]
     
     // Add E2E protection
     sender.protect(&mut data)?;
@@ -71,39 +72,23 @@ fn main() -> E2EResult<()> {
 }
 ```
 
-### Gateway/Forward Example
-
-```rust
-use autosar_e2e::{E2EProfile, E2EResult};
-use autosar_e2e::profile11::{Profile11, Profile11Config};
-
-fn gateway_example() -> E2EResult<()> {
-    let config = Profile11Config::default();
-    let mut gateway = Profile11::new(config);
-
-    // Receive protected data from network
-    let mut data = receive_from_network();
-    
-    // Forward with updated protection
-    gateway.forward(&mut data)?;
-    
-    // Send to next hop
-    send_to_network(&data);
-    
-    Ok(())
-}
-```
-
 ## Profile 11 Specifications
 
 ### Data Layout
 
-Profile 11 uses a 2-byte header:
-
+Basically, Profile 11 uses a 2-byte header. If crc offset is zero, data layout is as the below.
 ```
 Byte 0: CRC-8
 Byte 1: [DataIDNibble(4 bits) | Counter(4 bits)]
 Bytes 2-n: User Data
+```
+
+If crc offset is 64 and distance among crc, nibble and counter is the same, data layout is as the below.
+```
+Byte 0-7: User Data
+Byte 8: CRC-8
+Byte 9: [DataIDNibble(4 bits) | Counter(4 bits)]
+Bytes 10-n: User Data
 ```
 
 ### Modes
@@ -115,9 +100,13 @@ Bytes 2-n: User Data
 
 | Parameter | Description | Range | Default |
 |-----------|-------------|-------|---------|
-| `mode` | Profile mode with Data ID | Both(Id) or Nibble(Id) | Nibble(0x0100) |
+|`counter_offset`| bit offset of counter(it shall be a multiple of 4) | - | 8 |
+|`crc_offset`| bit offset of crc(it shall be a multiple of 8) | - | 0 |
+| `mode` | Profile mode | Both or Nibble | Nibble |
+|`data_id`| bit offset of nibble(it shall be a multiple of 4) | - | 0x0123 |
+|`nibble_offset`| bit offset of data id nibble(it shall be a multiple of 4) | - | 12 |
 | `max_delta_counter` | Maximum counter delta | 1-14 | 1 |
-| `max_data_length` | Maximum data length | ≤240 | 240 |
+| `data_length` | data length bits(It shall be a multiple of 8) | ≤240 | 64 |
 
 ## Architecture
 
@@ -130,7 +119,6 @@ pub trait E2EProfile {
     fn new(config: Self::Config) -> Self;
     fn protect(&mut self, data: &mut Vec<u8>) -> E2EResult<()>;
     fn check(&mut self, data: &[u8]) -> E2EResult<E2EStatus>;
-    fn forward(&mut self, data: &mut Vec<u8>) -> E2EResult<()>;
 }
 ```
 
