@@ -17,6 +17,7 @@ This library implements the AUTOSAR E2E protection mechanism which provides end-
 ## Features
 
 - **Profile 11** implementation (variants 11A and 11C)
+- **Profile 22** implementation
 - Support for Protect, Check operations
 - Comprehensive documentation and tests
 - Configurable parameters per AUTOSAR specification
@@ -27,7 +28,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-autosar-e2e = "0.1.0"
+autosar-e2e = "0.2.0"
 ```
 
 ## Usage
@@ -72,31 +73,35 @@ fn main() -> E2EResult<()> {
 }
 ```
 
-## Profile 11 Specifications
+## Profiles
 
-### Data Layout
+### Profile 11 Specifications
+
+#### Profile 11 Data Layout
 
 Basically, Profile 11 uses a 2-byte header. If crc offset is zero, data layout is as the below.
-```
+
+```block
 Byte 0: CRC-8
 Byte 1: [DataIDNibble(4 bits) | Counter(4 bits)]
 Bytes 2-n: User Data
 ```
 
 If crc offset is 64 and distance among crc, nibble and counter is the same, data layout is as the below.
-```
+
+```block
 Byte 0-7: User Data
 Byte 8: CRC-8
 Byte 9: [DataIDNibble(4 bits) | Counter(4 bits)]
 Bytes 10-n: User Data
 ```
 
-### Modes
+#### Profile 11 Modes
 
 - **Both(11A)**: DataIDNibble field can be used for user data
 - **Nibble(11C)**: DataIDNibble field is used for protection
 
-### Configuration Parameters
+#### Profile 11 Configuration Parameters
 
 | Parameter | Description | Range | Default |
 |-----------|-------------|-------|---------|
@@ -107,6 +112,26 @@ Bytes 10-n: User Data
 |`nibble_offset`| bit offset of data id nibble(it shall be a multiple of 4) | - | 12 |
 | `max_delta_counter` | Maximum counter delta | 1-14 | 1 |
 | `data_length` | data length bits(It shall be a multiple of 8) | ≤240 | 64 |
+
+### Profile 22 Specifications
+
+#### Profile 22 Data Layout
+
+```block
+Byte 0-7: User Data
+Byte 8: CRC-8
+Byte 9: [User Data | Counter(4 bits)]
+Bytes 10-n: User Data
+```
+
+#### Profile 22 Configuration Parameters
+
+| Parameter | Description | Range | Default |
+|-----------|-------------|-------|---------|
+| `data_length` | data length bits(It shall be a multiple of 8) | - | 64 |
+|`data_id_list`| 16 8bit data id list | - | [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10] |
+| `max_delta_counter` | Maximum counter delta | 1-15 | 1 |
+|`offset`| bit offset of crc | - | 0 |
 
 ## Architecture
 
@@ -147,13 +172,10 @@ cargo tarpaulin --out Html
 
 ## Future Work
 
-- [ ] Add Profile 1 support
-- [ ] Add Profile 2 support
-- [ ] Add Profile 4 support
+- [ ] Add Profile 44 support
 - [ ] Add Profile 5 support
 - [ ] Add Profile 6 support
 - [ ] Add Profile 7 support
-- [ ] Add Profile 22 support
 - [ ] Performance benchmarks
 - [ ] Async support
 

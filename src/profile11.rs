@@ -1,6 +1,6 @@
 //! # E2E Profile 11 Implementation
 //!
-//! Profile 11 is designed for protecting small data packets (up to DEFAULT_MAX_DATA_LENGTH bytes)
+//! Profile 11 is designed for protecting small data packets (up to MAX_DATA_LENGTH_BITS bytes)
 //! with low overhead. It uses:
 //! - 8-bit CRC for data integrity
 //! - 4-bit counter for sequence checking (0-14)
@@ -155,7 +155,7 @@ impl Profile11 {
     }
     fn write_nibble_data(&self, offset: u8, set_value: u8, data: &mut[u8]) {
         let byte_idx = (offset >> 3) as usize;
-        let shift = (offset & 0x07) as u8;
+        let shift = offset & 0x07;
 
         let mask =!(NIBBLE_MASK << shift);
         let val = (set_value & NIBBLE_MASK) << shift;
@@ -163,7 +163,7 @@ impl Profile11 {
     }
     fn read_nibble_data(&self, offset: u8, data: &[u8]) -> u8 {
         let byte_idx  = (offset >> 3) as usize;
-        let shift    = (offset & 0x07) as u8;
+        let shift    = offset & 0x07;
 
         (data[byte_idx] >> shift) & NIBBLE_MASK
     }
