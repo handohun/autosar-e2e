@@ -40,6 +40,7 @@
 use thiserror::Error;
 pub mod profile11;
 pub mod profile22;
+pub mod profile4;
 
 /// Result type for E2E operations
 pub type E2EResult<T> = Result<T, E2EError>;
@@ -59,6 +60,8 @@ pub enum E2EStatus {
     OkSomeLost,
     /// Counter check failed - possible message loss/duplication
     WrongSequence,
+    /// Data Length check failed - incorrect length
+    DataLengthError,
 }
 
 /// E2E Error types

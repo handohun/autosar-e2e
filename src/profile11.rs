@@ -90,6 +90,12 @@ impl Default for Profile11Config {
     }
 }
 
+pub struct Profile11Check {
+    rx_counter: u8,
+    rx_crc: u8,
+    rx_nibble: u8,
+    calculated_crc: u8,
+}
 /// E2E Profile 11 Implementation
 ///
 /// Implements AUTOSAR E2E Profile 11 protection mechanism with support
@@ -206,16 +212,16 @@ impl Profile11 {
     fn increment_counter(&mut self) {
         self.counter = (self.counter + 1) % COUNTER_MODULO;
     }
-    fn do_checks(&mut self, data : (u8, u8, u8, u8)) -> E2EStatus {
-        if data.0 != data.1 {
+    fn do_checks(&mut self, check_items: Profile11Check) -> E2EStatus {
+        if check_items.calculated_crc != check_items.rx_crc {
             return E2EStatus::CrcError
         }
-        if (self.config.mode == Profile11IdMode::Nibble) && ((self.config.data_id >> BITS_PER_BYTE) as u8 & NIBBLE_MASK) != data.2
+        if (self.config.mode == Profile11IdMode::Nibble) && ((self.config.data_id >> BITS_PER_BYTE) as u8 & NIBBLE_MASK) != check_items.rx_nibble
         {
             return E2EStatus::DataIdError
         }
-        let status = self.validate_counter(data.3);
-        self.counter = data.3;
+        let status = self.validate_counter(check_items.rx_counter);
+        self.counter = check_items.rx_counter;
         status
     }
     /// Check if counter delta is within acceptable range
@@ -275,11 +281,11 @@ impl E2EProfile for Profile11 {
     fn check(&mut self, data: &[u8]) -> E2EResult<E2EStatus> {
         // Check data length
         self.validate_length(data.len())?;
-        let rx_nibble = self.read_nibble_data(self.config.nibble_offset, data);
-        let rx_counter = self.read_nibble_data(self.config.counter_offset, data);
-        let rx_crc = self.read_crc(data);
-        let calculated_crc = self.compute_crc(data);
-        let status = self.do_checks((calculated_crc, rx_crc, rx_nibble, rx_counter));
+        let check_items = Profile11Check{rx_nibble : self.read_nibble_data(self.config.nibble_offset, data),
+                                                        rx_counter : self.read_nibble_data(self.config.counter_offset, data),
+                                                        rx_crc : self.read_crc(data),
+                                                        calculated_crc : self.compute_crc(data)};
+        let status = self.do_checks(check_items);
         if !self.initialized && matches!(status, E2EStatus::Ok | E2EStatus::OkSomeLost) {
             self.initialized = true;
         }

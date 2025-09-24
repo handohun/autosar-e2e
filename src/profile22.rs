@@ -45,6 +45,13 @@ impl Default for Profile22Config {
     }
 }
 
+/// Check Item for E2E Profile 4
+#[derive(Debug, Clone)]
+pub struct Profile22Check {
+    rx_counter: u8,
+    rx_crc: u8,
+    calculated_crc: u8,
+}
 /// E2E Profile 22 Implementation
 ///
 /// Implements AUTOSAR E2E Profile 22 protection mechanism
@@ -119,12 +126,12 @@ impl Profile22 {
         digest.update(&[self.config.data_id_list[self.read_counter(data) as usize]]); // crc calculation data id
         digest.finalize()
     }
-    fn do_checks(&mut self, data : (u8, u8, u8)) -> E2EStatus {
-        if data.0 != data.1 {
+    fn do_checks(&mut self, check_items : Profile22Check) -> E2EStatus {
+        if check_items.calculated_crc != check_items.rx_crc {
             return E2EStatus::CrcError
         }
-        let status = self.validate_counter(data.2);
-        self.counter = data.2;
+        let status = self.validate_counter(check_items.rx_counter);
+        self.counter = check_items.rx_counter;
         status
     }
     /// Check if counter delta is within acceptable range
@@ -175,10 +182,10 @@ impl E2EProfile for Profile22 {
     fn check(&mut self, data: &[u8]) -> E2EResult<E2EStatus> {
         // Check data length
         self.validate_length(data.len())?;
-        let rx_counter = self.read_counter(data);
-        let rx_crc = self.read_crc(data);
-        let calculated_crc = self.compute_crc(data);
-        let status = self.do_checks((calculated_crc, rx_crc, rx_counter));
+        let check_items = Profile22Check{rx_counter: self.read_counter(data), 
+                                                        rx_crc: self.read_crc(data), 
+                                                        calculated_crc: self.compute_crc(data)};
+        let status = self.do_checks(check_items);
         Ok(status)
     }
 }

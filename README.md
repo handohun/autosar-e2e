@@ -18,6 +18,7 @@ This library implements the AUTOSAR E2E protection mechanism which provides end-
 
 - **Profile 11** implementation (variants 11A and 11C)
 - **Profile 22** implementation
+- **Profile 4** implementation
 - Support for Protect, Check operations
 - Comprehensive documentation and tests
 - Configurable parameters per AUTOSAR specification
@@ -28,7 +29,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-autosar-e2e = "0.2.0"
+autosar-e2e = "0.3.0"
 ```
 
 ## Usage
@@ -133,6 +134,27 @@ Bytes 10-n: User Data
 | `max_delta_counter` | Maximum counter delta | 1-15 | 1 |
 |`offset`| bit offset of crc | - | 0 |
 
+### Profile 4 Specifications
+
+#### Profile 4 Data Layout
+
+```block
+Byte 0-1: Data Length
+Byte 2-3: Counter
+Byte 4-7: Data ID
+Bytes 8-11: Crc
+```
+
+#### Profile 4 Configuration Parameters
+
+| Parameter | Description | Range | Default |
+|-----------|-------------|-------|---------|
+| `min_data_length` | min data length bits(It shall be a multiple of 8) | - | 96 |
+| `max_data_length` | max data length bits(It shall be a multiple of 8) | - | 32768 |
+|`data_id`| data id | - | 0x0a0b0c0d |
+|`offset`| bit offset of crc | - | 0x0000 |
+| `max_delta_counter` | Maximum counter delta | 1-0xFFFFE | 1 |
+
 ## Architecture
 
 The library follows a trait-based design for extensibility:
@@ -172,10 +194,10 @@ cargo tarpaulin --out Html
 
 ## Future Work
 
-- [ ] Add Profile 44 support
 - [ ] Add Profile 5 support
 - [ ] Add Profile 6 support
 - [ ] Add Profile 7 support
+- [ ] Add Profile 8 support
 - [ ] Performance benchmarks
 - [ ] Async support
 
