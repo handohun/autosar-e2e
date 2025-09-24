@@ -41,6 +41,7 @@ use thiserror::Error;
 pub mod profile11;
 pub mod profile22;
 pub mod profile4;
+pub mod profile5;
 
 /// Result type for E2E operations
 pub type E2EResult<T> = Result<T, E2EError>;
