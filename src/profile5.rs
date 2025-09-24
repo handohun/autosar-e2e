@@ -104,7 +104,7 @@ impl Profile5 {
     }
     fn write_crc(&self, calculated_crc: u16, data: &mut[u8]) {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        data[offset+0..=offset+1].copy_from_slice(&calculated_crc.to_le_bytes());
+        data[offset..=offset+1].copy_from_slice(&calculated_crc.to_le_bytes());
 
     }
     fn increment_counter(&mut self) {
@@ -116,7 +116,7 @@ impl Profile5 {
     }
     fn read_crc(&self, data: &[u8]) -> u16 {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        u16::from_le_bytes([data[offset + 0], data[offset + 1]])
+        u16::from_le_bytes([data[offset], data[offset + 1]])
     }
 
     fn do_checks(&mut self, check_items : Profile5Check) -> E2EStatus {

@@ -68,14 +68,14 @@ pub struct Profile8 {
 impl Profile8 {
     /// Validate configuration parameters
     fn validate_config(config: &Profile8Config) -> E2EResult<()> {
-        if config.min_data_length < 16*BITS_PER_BYTE || 4294967295 < config.min_data_length{
+        if config.min_data_length < 16*BITS_PER_BYTE {
             return Err(E2EError::InvalidConfiguration(
-                "Minimum Data length shall be between 16B and 536870911B".into()
+                "Minimum Data length shall be larger than 16B".into()
             ));
         }
-        if config.max_data_length < config.min_data_length || 4294967295 < config.max_data_length{
+        if config.max_data_length < config.min_data_length {
             return Err(E2EError::InvalidConfiguration(
-                "Minimum Data length shall be between MinDataLength and 536870911B".into()
+                "Maximum Data length shall be larger than MinDataLength".into()
             ));
         }
         if config.max_delta_counter == 0 || config.max_delta_counter == COUNTER_MAX  {
@@ -124,7 +124,7 @@ impl Profile8 {
 
     }
     fn increment_counter(&mut self) {
-        self.counter = if self.counter == COUNTER_MAX {0x0000} else { (self.counter + 1) & COUNTER_MAX};
+        self.counter = if self.counter == COUNTER_MAX {0x00000000} else { (self.counter + 1) & COUNTER_MAX};
     }
 
     fn read_data_length(&self, data: &[u8]) -> u32 {
