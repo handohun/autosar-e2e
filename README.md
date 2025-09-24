@@ -20,6 +20,9 @@ This library implements the AUTOSAR E2E protection mechanism which provides end-
 - **Profile 22** implementation
 - **Profile 4** implementation
 - **Profile 5** implementation
+- **Profile 6** implementation
+- **Profile 7** implementation
+- **Profile 8** implementation
 - Support for Protect, Check operations
 - Comprehensive documentation and tests
 - Configurable parameters per AUTOSAR specification
@@ -213,9 +216,8 @@ cargo tarpaulin --out Html
 
 ## Future Work
 
-- [ ] Add Profile 6 support
-- [ ] Add Profile 7 support
-- [ ] Add Profile 8 support
+- [ ] Add Profile 4m support
+- [ ] Add Profile 7m support
 - [ ] Performance benchmarks
 - [ ] Async support
 

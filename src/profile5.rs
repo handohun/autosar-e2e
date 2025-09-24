@@ -161,7 +161,7 @@ impl E2EProfile for Profile5 {
 
     fn new(config: Self::Config) -> Self {
         // Validate config (panic if invalid in constructor for simplicity)
-        Self::validate_config(&config).expect("Invalid Profile22 configuration");
+        Self::validate_config(&config).expect("Invalid Profile5 configuration");
         Self {
             config,
             counter: 0,

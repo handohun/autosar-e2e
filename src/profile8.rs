@@ -1,81 +1,81 @@
-//! # E2E Profile 4 Implementation
+//! # E2E Profile 8 Implementation
 //!
-//! Profile 4 is designed for protecting large data packets
+//! Profile 8 is designed for protecting large data packets
 //! with low overhead. It uses:
 //! - 32-bit CRC for data integrity
-//! - 16-bit counter for sequence checking
+//! - 32-bit counter for sequence checking
 //! - 32-bit Data ID for masquerade prevention
-//! - 16-bit Data Length to support dynamic size data
+//! - 32-bit Data Length to support dynamic size data
 //!
 //! # Data layout
-//! [DATA ... | LENGTH(2B) | COUNTER(2B) | ID (4B) | CRC(4B) | DATA ...]
+//! [DATA ... | CRC(4B) | LENGTH(4B) | CONTER(4B) | ID (4B) | DATA ...]
 use crate::{E2EError, E2EProfile, E2EResult, E2EStatus};
 use crc::{Crc, CRC_32_AUTOSAR};
 
 // Constants
-const BITS_PER_BYTE : u16 = 8;
-const COUNTER_MAX : u16 = 0xFFFF;
-const COUNTER_MODULO : u32 = 0x10000;
+const BITS_PER_BYTE : u32 = 8;
+const COUNTER_MAX : u32 = 0xFFFFFFFF;
+const COUNTER_MODULO : u64 = 0x100000000;
 
-/// Configuration for E2E Profile 4
+/// Configuration for E2E Profile 8
 #[derive(Debug, Clone)]
-pub struct Profile4Config {
+pub struct Profile8Config {
     /// data id
     pub data_id: u32,
     /// Bit offset of the first bit of the E2E header from the beginning of the Data
-    pub offset: u16,
+    pub offset: u32,
     /// Minimal length of Data, in bits
-    pub min_data_length: u16,
+    pub min_data_length: u32,
     /// Maximal length of Data, in bits
-    pub max_data_length: u16,
+    pub max_data_length: u32,
     /// Maximum allowed delta between consecutive counters
-    pub max_delta_counter: u16,
+    pub max_delta_counter: u32,
 }
 
-/// Check Item for E2E Profile 4
+/// Check Item for E2E Profile 8
 #[derive(Debug, Clone)]
-pub struct Profile4Check {
-    rx_data_length: u16,
-    rx_counter: u16,
+pub struct Profile8Check {
+    rx_data_length: u32,
+    rx_counter: u32,
     rx_data_id: u32,
     rx_crc: u32,
     calculated_crc: u32,
-    data_len : u16,
+    data_len : u32,
 }
 
-impl Default for Profile4Config {
+impl Default for Profile8Config {
     fn default() -> Self {
         Self {
             data_id : 0x0a0b0c0d,
-            offset : 0x0000,
-            min_data_length: 96, // 12bytes
-            max_data_length: 32768, // 4096bytes
+            offset : 0x00000000,
+            min_data_length: 128, // 16bytes
+            max_data_length: 4294967295, // MAX(U32)
             max_delta_counter: 1,
         }
     }
 }
 
-/// E2E Profile 4 Implementation
+/// E2E Profile 8 Implementation
 ///
-/// Implements AUTOSAR E2E Profile 4 protection mechanism
+/// Implements AUTOSAR E2E Profile 8 protection mechanism
 #[derive(Clone)]
-pub struct Profile4 {
-    config: Profile4Config,
-    counter: u16,
+pub struct Profile8 {
+    config: Profile8Config,
+    counter: u32,
     initialized: bool,
 }
 
-impl Profile4 {
+impl Profile8 {
     /// Validate configuration parameters
-    fn validate_config(config: &Profile4Config) -> E2EResult<()> {
-        if config.min_data_length < 12*BITS_PER_BYTE || 4096*BITS_PER_BYTE < config.min_data_length{
+    fn validate_config(config: &Profile8Config) -> E2EResult<()> {
+        if config.min_data_length < 16*BITS_PER_BYTE || 4294967295 < config.min_data_length{
             return Err(E2EError::InvalidConfiguration(
-                "Minimum Data length shall be between 12B and 4096B".into()
+                "Minimum Data length shall be between 16B and 536870911B".into()
             ));
         }
-        if config.max_data_length < config.min_data_length || 4096*8 < config.max_data_length{
+        if config.max_data_length < config.min_data_length || 4294967295 < config.max_data_length{
             return Err(E2EError::InvalidConfiguration(
-                "Minimum Data length shall be between MinDataLength and 4096B".into()
+                "Minimum Data length shall be between MinDataLength and 536870911B".into()
             ));
         }
         if config.max_delta_counter == 0 || config.max_delta_counter == COUNTER_MAX  {
@@ -86,7 +86,7 @@ impl Profile4 {
         Ok(())
     }
     /// Validate data length against min/max constraints
-    fn validate_length(&self, len: u16) -> E2EResult<()> {
+    fn validate_length(&self, len: u32) -> E2EResult<()> {
         let min_bytes = self.config.min_data_length / BITS_PER_BYTE;
         let max_bytes = self.config.max_data_length / BITS_PER_BYTE;
         if len < min_bytes || max_bytes < len {
@@ -97,53 +97,54 @@ impl Profile4 {
         }
         Ok(())
     }
-    fn increment_counter(&mut self) {
-        self.counter = (self.counter as u32 + 1) as u16 & COUNTER_MAX;
-    }
     fn write_data_length(&self, data: &mut[u8]) {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        let len16 = data.len() as u16;
-        data[offset..=offset+1].copy_from_slice(&len16.to_be_bytes());
+        let len32 = data.len() as u32;
+        data[offset+4..=offset+7].copy_from_slice(&len32.to_be_bytes());
     }
     fn write_counter(&self, data: &mut[u8]) {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        data[offset+2..=offset+3].copy_from_slice(&self.counter.to_be_bytes());
+        data[offset+8..=offset+11].copy_from_slice(&self.counter.to_be_bytes());
     }
     fn write_data_id(&self, data: &mut[u8]) {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        data[offset+4..=offset+7].copy_from_slice(&self.config.data_id.to_be_bytes());
+        data[offset+12..=offset+15].copy_from_slice(&self.config.data_id.to_be_bytes());
     }
     fn compute_crc(&self, data: &[u8]) -> u32 {
         let crc: Crc<u32> = Crc::<u32>::new(&CRC_32_AUTOSAR);
         let mut digest = crc.digest();
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        digest.update(&data[0..offset+8]); // crc calculation data before offset
-        digest.update(&data[(offset+12)..]); // crc calculation data after offset
+        digest.update(&data[0..offset]); // crc calculation data before offset
+        digest.update(&data[(offset+4)..]); // crc calculation data after offset
         digest.finalize()
     }
     fn write_crc(&self, calculated_crc: u32, data: &mut[u8]) {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        data[offset+8..=offset+11].copy_from_slice(&calculated_crc.to_be_bytes());
+        data[offset..=offset+3].copy_from_slice(&calculated_crc.to_be_bytes());
 
     }
-    fn read_data_length(&self, data: &[u8]) -> u16 {
-        let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        u16::from_be_bytes([data[offset], data[offset + 1]])
+    fn increment_counter(&mut self) {
+        self.counter = if self.counter == COUNTER_MAX {0x0000} else { (self.counter + 1) & COUNTER_MAX};
     }
-    fn read_counter(&self, data: &[u8]) -> u16{
+
+    fn read_data_length(&self, data: &[u8]) -> u32 {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        u16::from_be_bytes([data[offset + 2], data[offset + 3]])
+        u32::from_be_bytes([data[offset+4], data[offset + 5], data[offset + 6], data[offset + 7]])
     }
-    fn read_data_id(&self, data: &[u8]) -> u32 {
-        let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        u32::from_be_bytes([data[offset + 4], data[offset + 5], data[offset + 6], data[offset + 7]])
-    }
-    fn read_crc(&self, data: &[u8]) -> u32 {
+    fn read_counter(&self, data: &[u8]) -> u32{
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
         u32::from_be_bytes([data[offset + 8], data[offset + 9], data[offset + 10], data[offset + 11]])
     }
+    fn read_data_id(&self, data: &[u8]) -> u32 {
+        let offset = (self.config.offset / BITS_PER_BYTE) as usize;
+        u32::from_be_bytes([data[offset + 12], data[offset + 13], data[offset + 14], data[offset + 15]])
+    }
+    fn read_crc(&self, data: &[u8]) -> u32 {
+        let offset = (self.config.offset / BITS_PER_BYTE) as usize;
+        u32::from_be_bytes([data[offset], data[offset + 1], data[offset + 2], data[offset + 3]])
+    }
 
-    fn do_checks(&mut self, check_items : Profile4Check) -> E2EStatus {
+    fn do_checks(&mut self, check_items : Profile8Check) -> E2EStatus {
         if check_items.calculated_crc != check_items.rx_crc {
             return E2EStatus::CrcError
         }
@@ -158,15 +159,15 @@ impl Profile4 {
         status
     }
     /// Check if counter delta is within acceptable range
-    fn check_counter_delta(&self, received_counter: u16) -> u16 {
+    fn check_counter_delta(&self, received_counter: u32) -> u32 {
         if received_counter >= self.counter {
             received_counter - self.counter
         } else {
             // Handle wrap-around
-            ((COUNTER_MODULO + received_counter as u32 - self.counter as u32) % COUNTER_MODULO) as u16
+            ((COUNTER_MODULO + received_counter as u64 - self.counter as u64) % COUNTER_MODULO) as u32
         }
     }
-    fn validate_counter(&self, rx_counter: u16) -> E2EStatus {
+    fn validate_counter(&self, rx_counter: u32) -> E2EStatus {
         let delta = self.check_counter_delta(rx_counter);
 
         if delta == 0 {
@@ -186,12 +187,12 @@ impl Profile4 {
     }
 }
 
-impl E2EProfile for Profile4 {
-    type Config = Profile4Config;
+impl E2EProfile for Profile8 {
+    type Config = Profile8Config;
 
     fn new(config: Self::Config) -> Self {
         // Validate config (panic if invalid in constructor for simplicity)
-        Self::validate_config(&config).expect("Invalid Profile4 configuration");
+        Self::validate_config(&config).expect("Invalid Profile8 configuration");
         Self {
             config,
             counter: 0,
@@ -200,7 +201,7 @@ impl E2EProfile for Profile4 {
     }
 
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()> {
-        self.validate_length(data.len() as u16)?;
+        self.validate_length(data.len() as u32)?;
         self.write_data_length(data);
         self.write_counter(data);
         self.write_data_id(data);
@@ -212,13 +213,13 @@ impl E2EProfile for Profile4 {
 
     fn check(&mut self, data: &[u8]) -> E2EResult<E2EStatus> {
         // Check data length
-        self.validate_length(data.len() as u16)?;
-        let check_items = Profile4Check{rx_data_length: self.read_data_length(data), 
+        self.validate_length(data.len() as u32)?;
+        let check_items = Profile8Check{rx_data_length: self.read_data_length(data), 
                                                         rx_counter: self.read_counter(data),
                                                         rx_crc: self.read_crc(data),
                                                         rx_data_id: self.read_data_id(data),
                                                         calculated_crc: self.compute_crc(data),
-                                                        data_len : data.len() as u16};
+                                                        data_len : data.len() as u32};
         let status = self.do_checks(check_items);
         if !self.initialized && matches!(status, E2EStatus::Ok | E2EStatus::OkSomeLost) {
             self.initialized = true;
@@ -232,54 +233,26 @@ mod tests {
     use super::*;
     #[test]
     fn test_profile4_basic_example() {
-        let mut profile_tx = Profile4::new(Profile4Config::default());
-        let mut profile_rx = Profile4::new(Profile4Config::default());
+        let mut profile_tx = Profile8::new(Profile8Config::default());
+        let mut profile_rx = Profile8::new(Profile8Config::default());
 
-        let mut data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-        profile_tx.protect(&mut data).unwrap();
-        // length check
-        assert_eq!(data[0], 0x00);
-        assert_eq!(data[1], 0x10);
-        // counter check
-        assert_eq!(data[2], 0x00);
-        assert_eq!(data[3], 0x00);
-        // data id check
-        assert_eq!(data[4], 0x0a);
-        assert_eq!(data[5], 0x0b);
-        assert_eq!(data[6], 0x0c);
-        assert_eq!(data[7], 0x0d);
-        // crc check
-        assert_eq!(data[8], 0x86);
-        assert_eq!(data[9], 0x2b);
-        assert_eq!(data[10], 0x05);
-        assert_eq!(data[11], 0x56);
-        // data check
-        assert_eq!(data[12], 0x00);
-        assert_eq!(data[13], 0x00);
-        assert_eq!(data[14], 0x00);
-        assert_eq!(data[15], 0x00);
-        assert_eq!(profile_rx.check(&data).unwrap(), E2EStatus::Ok);
-
-    }
-
-    #[test]
-    fn test_profile4_offset_example() {
-        let config = Profile4Config {
-            offset : 64,
-            ..Default::default()
-        };
-
-        let mut profile_tx = Profile4::new(config.clone());
-        let mut profile_rx = Profile4::new(config);
-
-        let mut data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+        let mut data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        0x00, 0x00, 0x00, 0x00];
         profile_tx.protect(&mut data).unwrap();
+        // CRC check
+        assert_eq!(data[0], 0x41);
+        assert_eq!(data[1], 0x49);
+        assert_eq!(data[2], 0x4e);
+        assert_eq!(data[3], 0x52);
         // length check
-        assert_eq!(data[8], 0x00);
-        assert_eq!(data[9], 0x18);
+        assert_eq!(data[4], 0x00);
+        assert_eq!(data[5], 0x00);
+        assert_eq!(data[6], 0x00);
+        assert_eq!(data[7], 0x14);
         // counter check
+        assert_eq!(data[8], 0x00);
+        assert_eq!(data[9], 0x00);
         assert_eq!(data[10], 0x00);
         assert_eq!(data[11], 0x00);
         // data id check
@@ -287,42 +260,89 @@ mod tests {
         assert_eq!(data[13], 0x0b);
         assert_eq!(data[14], 0x0c);
         assert_eq!(data[15], 0x0d);
-        // crc check
-        assert_eq!(data[16], 0x69);
-        assert_eq!(data[17], 0xd7);
-        assert_eq!(data[18], 0x50);
-        assert_eq!(data[19], 0x2e);
         assert_eq!(profile_rx.check(&data).unwrap(), E2EStatus::Ok);
+
     }
+
     #[test]
-    fn test_profile4_counter_wraparound() {
-        let config = Profile4Config {
+    fn test_profile8_offset_example() {
+        let config = Profile8Config {
             offset : 64,
             ..Default::default()
         };
 
-        let mut profile_tx = Profile4::new(config.clone());
-        let mut profile_rx = Profile4::new(config);
+        let mut profile_tx = Profile8::new(config.clone());
+        let mut profile_rx = Profile8::new(config);
+
+        let mut data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00];
+        profile_tx.protect(&mut data).unwrap();
+        // CRC check
+        assert_eq!(data[8], 0xe8);
+        assert_eq!(data[9], 0x91);
+        assert_eq!(data[10], 0xe5);
+        assert_eq!(data[11], 0xa8);
+        // length check
+        assert_eq!(data[12], 0x00);
+        assert_eq!(data[13], 0x00);
+        assert_eq!(data[14], 0x00);
+        assert_eq!(data[15], 0x1c);
+        // counter check
+        assert_eq!(data[16], 0x00);
+        assert_eq!(data[17], 0x00);
+        assert_eq!(data[18], 0x00);
+        assert_eq!(data[19], 0x00);
+        // data id check
+        assert_eq!(data[20], 0x0a);
+        assert_eq!(data[21], 0x0b);
+        assert_eq!(data[22], 0x0c);
+        assert_eq!(data[23], 0x0d);
+        assert_eq!(profile_rx.check(&data).unwrap(), E2EStatus::Ok);
+    }
+    #[test]
+    fn test_profile8_counter_wraparound() {
+        let config = Profile8Config {
+            offset : 64,
+            ..Default::default()
+        };
+
+        let mut profile_tx = Profile8::new(config.clone());
+        let mut profile_rx = Profile8::new(config);
 
         let mut data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         profile_tx.protect(&mut data).unwrap();
         // counter check
-        assert_eq!(data[10], 0x00);
-        assert_eq!(data[11], 0x00);
+        assert_eq!(data[16], 0x00);
+        assert_eq!(data[17], 0x00);
+        assert_eq!(data[18], 0x00);
+        assert_eq!(data[19], 0x00);
         assert_eq!(profile_rx.check(&data).unwrap(), E2EStatus::Ok);
-        for i in 1u16..=0xFFFF {
-            profile_tx.protect(&mut data).unwrap();
-            // counter check
-            assert_eq!(data[10], i.to_be_bytes()[0]);
-            assert_eq!(data[11], i.to_be_bytes()[1]);
-            assert_eq!(profile_rx.check(&data).unwrap(), E2EStatus::Ok);
-        }
         profile_tx.protect(&mut data).unwrap();
         // counter check
-        assert_eq!(data[10], 0x00);
-        assert_eq!(data[11], 0x00);
+        assert_eq!(data[16], 0x00);
+        assert_eq!(data[17], 0x00);
+        assert_eq!(data[18], 0x00);
+        assert_eq!(data[19], 0x01);
+        assert_eq!(profile_rx.check(&data).unwrap(), E2EStatus::Ok);
+        profile_rx.counter = 0xFFFFFFFE;
+        profile_tx.counter = 0xFFFFFFFF;
+        profile_tx.protect(&mut data).unwrap();
+        // counter check
+        assert_eq!(data[16], 0xFF);
+        assert_eq!(data[17], 0xFF);
+        assert_eq!(data[18], 0xFF);
+        assert_eq!(data[19], 0xFF);
+        assert_eq!(profile_rx.check(&data).unwrap(), E2EStatus::Ok);
+        profile_tx.protect(&mut data).unwrap();
+        // counter check
+        assert_eq!(data[16], 0x00);
+        assert_eq!(data[17], 0x00);
+        assert_eq!(data[18], 0x00);
+        assert_eq!(data[19], 0x00);
         assert_eq!(profile_rx.check(&data).unwrap(), E2EStatus::Ok);
     }
 }
