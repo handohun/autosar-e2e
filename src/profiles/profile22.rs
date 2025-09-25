@@ -37,13 +37,10 @@ pub struct Profile22Config {
 impl Default for Profile22Config {
     fn default() -> Self {
         Self {
-            data_length: 64, // bits
-            data_id_list: [
-                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
-                0x0f, 0x10,
-            ],
+            data_length: 64,        // bits
+            data_id_list: [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10],
             max_delta_counter: 1,
-            offset: 0, // bits
+            offset : 0,             // bits
         }
     }
 }
@@ -69,15 +66,14 @@ impl Profile22 {
     fn validate_config(config: &Profile22Config) -> E2EResult<()> {
         if (config.data_length % BITS_PER_BYTE) != 0 {
             return Err(E2EError::InvalidConfiguration(
-                "Data length shall be a multiple of 8".into(),
+                "Data length shall be a multiple of 8".into()
             ));
         }
 
-        if config.max_delta_counter == 0 || config.max_delta_counter > COUNTER_MAX {
-            return Err(E2EError::InvalidConfiguration(format!(
-                "Max delta counter must be between 1 and {}",
-                COUNTER_MAX
-            )));
+        if config.max_delta_counter == 0 || config.max_delta_counter > COUNTER_MAX  {
+            return Err(E2EError::InvalidConfiguration(
+                format!("Max delta counter must be between 1 and {}", COUNTER_MAX )
+            ));
         }
 
         Ok(())
@@ -92,7 +88,7 @@ impl Profile22 {
             )));
         }
         let expected_bytes = self.config.offset.div_ceil(BITS_PER_BYTE) + HEADER_LENGTH_BYTES;
-        if len < expected_bytes {
+        if len < expected_bytes  {
             return Err(E2EError::InvalidDataFormat(format!(
                 "Data Length shall be equal to or larger than offset + {} : Expected {} bytes, got {} bytes",
                 HEADER_LENGTH_BYTES, expected_bytes, len
@@ -103,17 +99,17 @@ impl Profile22 {
     fn increment_counter(&mut self) {
         self.counter = (self.counter + 1) % COUNTER_MODULO;
     }
-    fn write_counter(&self, data: &mut [u8]) {
+    fn write_counter(&self, data: &mut[u8]) {
         let byte_idx = self.config.offset >> 3;
 
-        data[byte_idx + 1] = (data[byte_idx + 1] & 0xF0) | self.counter;
+        data[byte_idx+1] = (data[byte_idx+1] & 0xF0) | self.counter;        
     }
-    fn read_counter(&self, data: &[u8]) -> u8 {
+    fn read_counter(&self, data: &[u8]) -> u8{
         let byte_idx = self.config.offset >> 3;
 
-        data[byte_idx + 1] & COUNTER_MASK
+        data[byte_idx+1] & COUNTER_MASK        
     }
-    fn write_crc(&self, calculated_crc: u8, data: &mut [u8]) {
+    fn write_crc(&self, calculated_crc: u8, data: &mut[u8]) {
         let byte_position = self.config.offset / BITS_PER_BYTE;
         data[byte_position] = calculated_crc;
     }
@@ -126,13 +122,13 @@ impl Profile22 {
         let mut digest = crc.digest();
         let offset_byte = self.config.offset / BITS_PER_BYTE;
         digest.update(&data[0..offset_byte]); // crc calculation data before offset
-        digest.update(&data[(offset_byte + 1)..]); // crc calculation data after offset
+        digest.update(&data[(offset_byte+1)..]); // crc calculation data after offset
         digest.update(&[self.config.data_id_list[self.read_counter(data) as usize]]); // crc calculation data id
         digest.finalize()
     }
-    fn do_checks(&mut self, check_items: Profile22Check) -> E2EStatus {
+    fn do_checks(&mut self, check_items : Profile22Check) -> E2EStatus {
         if check_items.calculated_crc != check_items.rx_crc {
-            return E2EStatus::CrcError;
+            return E2EStatus::CrcError
         }
         let status = self.validate_counter(check_items.rx_counter);
         self.counter = check_items.rx_counter;
@@ -168,7 +164,10 @@ impl E2EProfile for Profile22 {
     fn new(config: Self::Config) -> Self {
         // Validate config (panic if invalid in constructor for simplicity)
         Self::validate_config(&config).expect("Invalid Profile22 configuration");
-        Self { config, counter: 0 }
+        Self {
+            config,
+            counter: 0,
+        }
     }
 
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()> {
@@ -183,11 +182,9 @@ impl E2EProfile for Profile22 {
     fn check(&mut self, data: &[u8]) -> E2EResult<E2EStatus> {
         // Check data length
         self.validate_length(data.len())?;
-        let check_items = Profile22Check {
-            rx_counter: self.read_counter(data),
-            rx_crc: self.read_crc(data),
-            calculated_crc: self.compute_crc(data),
-        };
+        let check_items = Profile22Check{rx_counter: self.read_counter(data), 
+                                                        rx_crc: self.read_crc(data), 
+                                                        calculated_crc: self.compute_crc(data)};
         let status = self.do_checks(check_items);
         Ok(status)
     }
@@ -271,18 +268,16 @@ mod tests {
     #[test]
     fn test_profile22_offset_example() {
         let config = Profile22Config {
-            offset: 64,
-            data_length: 128,
+            offset : 64,
+            data_length : 128,
             ..Default::default()
         };
 
         let mut profile_tx = Profile22::new(config.clone());
         let mut profile_rx = Profile22::new(config);
 
-        let mut data1 = vec![
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00,
-        ];
+        let mut data1 = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         profile_tx.protect(&mut data1).unwrap();
         assert_eq!(data1[8], 0x14);
         assert_eq!(data1[9], 0x01);

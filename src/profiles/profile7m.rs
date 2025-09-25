@@ -3,9 +3,10 @@
 //! Profile 7M is identical to Profile 7 but includes additional fields
 //! in CRC calculation: message_type, message_result, and source_id
 
-use crate::field_ops;
-use crate::profile7::{Profile7, Profile7Config}; // Reuse Profile7Config
+use crate::profiles::profile7::{Profile7, Profile7Config}; // Reuse Profile7Config
 use crate::{E2EProfile, E2EResult, E2EStatus};
+
+const BITS_PER_BYTE : u32 = 8;
 
 /// Check Item for E2E Profile 7
 #[derive(Debug, Clone)]
@@ -27,27 +28,27 @@ pub struct Profile7m {
 
 impl Profile7m {
     fn write_source_id(&self, data: &mut [u8]) {
-        let offset = field_ops::calculate_offset_bytes_u32(self.config.offset);
-        field_ops::write_be_u32_at(data, offset + 20, self.source_id);
+        let offset = (self.config.offset / BITS_PER_BYTE) as usize;
+        data[offset+20..=offset+23].copy_from_slice(&self.source_id.to_be_bytes());
     }
     fn write_message_type(&self, data: &mut [u8]) {
-        let offset = field_ops::calculate_offset_bytes_u32(self.config.offset);
+        let offset = (self.config.offset / BITS_PER_BYTE) as usize;
         data[offset + 20] = (data[offset + 20] & 0x3F) | ((self.message_type & 0x03) << 6);
     }
     fn write_message_result(&self, data: &mut [u8]) {
-        let offset = field_ops::calculate_offset_bytes_u32(self.config.offset);
+        let offset = (self.config.offset / BITS_PER_BYTE) as usize;
         data[offset + 20] = (data[offset + 20] & 0xCF) | ((self.message_result & 0x03) << 4);
     }
     fn read_source_id(&self, data: &[u8]) -> u32 {
-        let offset = field_ops::calculate_offset_bytes_u32(self.config.offset);
-        field_ops::read_be_u32_at(data, offset + 20) & 0x0FFFFFFF
+        let offset = (self.config.offset / BITS_PER_BYTE) as usize;
+        u32::from_be_bytes([data[offset + 20], data[offset + 21], data[offset + 22], data[offset + 23]]) & 0x0FFFFFFF
     }
     fn read_message_type(&self, data: &[u8]) -> u8 {
-        let offset = field_ops::calculate_offset_bytes_u32(self.config.offset);
+        let offset = (self.config.offset / BITS_PER_BYTE) as usize;
         (data[offset + 20] >> 6) & 0x03
     }
     fn read_message_result(&self, data: &[u8]) -> u8 {
-        let offset = field_ops::calculate_offset_bytes_u32(self.config.offset);
+        let offset = (self.config.offset / BITS_PER_BYTE) as usize;
         (data[offset + 20] >> 4) & 0x03
     }
     fn do_checks(&mut self, check_items: Profile7mCheck) -> E2EStatus {
@@ -70,7 +71,7 @@ impl E2EProfile for Profile7m {
     fn new(config: Self::Config) -> Self {
         // Validate using Profile7's validation
         Self {
-            base: crate::profile7::Profile7::new(config.clone()), // This validates config
+            base: crate::profiles::profile7::Profile7::new(config.clone()), // This validates config
             config,
             message_type: 0x00,
             message_result: 0x00,

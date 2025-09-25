@@ -16,7 +16,7 @@
 //!
 //! ```rust
 //! use autosar_e2e::{E2EProfile, E2EResult};
-//! use autosar_e2e::profile11::{Profile11, Profile11Config, Profile11IdMode};
+//! use autosar_e2e::profiles::profile11::{Profile11, Profile11Config, Profile11IdMode};
 //!
 //! // Create a Profile 11 configuration
 //! let config = Profile11Config {
@@ -39,31 +39,7 @@
 
 use thiserror::Error;
 
-#[path = "common/counter.rs"]
-pub mod counter;
-#[path = "common/crc_ops.rs"]
-pub mod crc_ops;
-#[path = "common/field_ops.rs"]
-pub mod field_ops;
-#[path = "common/validation.rs"]
-pub mod validation;
-
-#[path = "profiles/profile11.rs"]
-pub mod profile11;
-#[path = "profiles/profile22.rs"]
-pub mod profile22;
-#[path = "profiles/profile4.rs"]
-pub mod profile4;
-#[path = "profiles/profile5.rs"]
-pub mod profile5;
-#[path = "profiles/profile6.rs"]
-pub mod profile6;
-#[path = "profiles/profile7.rs"]
-pub mod profile7;
-#[path = "profiles/profile7m.rs"]
-pub mod profile7m;
-#[path = "profiles/profile8.rs"]
-pub mod profile8;
+pub mod profiles;
 
 /// Result type for E2E operations
 pub type E2EResult<T> = Result<T, E2EError>;
