@@ -6,7 +6,7 @@
 use crate::profiles::profile7::{Profile7, Profile7Config}; // Reuse Profile7Config
 use crate::{E2EProfile, E2EResult, E2EStatus};
 
-const BITS_PER_BYTE : u32 = 8;
+const BITS_PER_BYTE: u32 = 8;
 
 /// Check Item for E2E Profile 7
 #[derive(Debug, Clone)]
@@ -29,7 +29,7 @@ pub struct Profile7m {
 impl Profile7m {
     fn write_source_id(&self, data: &mut [u8]) {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        data[offset+20..=offset+23].copy_from_slice(&self.source_id.to_be_bytes());
+        data[offset + 20..=offset + 23].copy_from_slice(&self.source_id.to_be_bytes());
     }
     fn write_message_type(&self, data: &mut [u8]) {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
@@ -41,7 +41,12 @@ impl Profile7m {
     }
     fn read_source_id(&self, data: &[u8]) -> u32 {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        u32::from_be_bytes([data[offset + 20], data[offset + 21], data[offset + 22], data[offset + 23]]) & 0x0FFFFFFF
+        u32::from_be_bytes([
+            data[offset + 20],
+            data[offset + 21],
+            data[offset + 22],
+            data[offset + 23],
+        ]) & 0x0FFFFFFF
     }
     fn read_message_type(&self, data: &[u8]) -> u8 {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
@@ -102,14 +107,13 @@ impl E2EProfile for Profile7m {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
     fn test_profile7m_basic_request_example() {
         let config = Profile7Config {
-            min_data_length : 192,
+            min_data_length: 192,
             ..Default::default()
         };
 
@@ -117,10 +121,8 @@ mod tests {
         let mut profile_rx = Profile7m::new(config);
 
         let mut data = vec![
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
         profile_tx.source_id = 0x00123456;
         profile_tx.message_result = 0;
@@ -164,7 +166,7 @@ mod tests {
     #[test]
     fn test_profile7m_basic_response_example() {
         let config = Profile7Config {
-            min_data_length : 192,
+            min_data_length: 192,
             ..Default::default()
         };
 
@@ -172,10 +174,8 @@ mod tests {
         let mut profile_rx = Profile7m::new(config);
 
         let mut data = vec![
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
         profile_tx.source_id = 0x00123456;
         profile_tx.message_result = 0;
@@ -216,10 +216,10 @@ mod tests {
         assert_eq!(profile_rx.check(&data).unwrap(), E2EStatus::Ok);
     }
 
-        #[test]
+    #[test]
     fn test_profile7m_basic_error_example() {
         let config = Profile7Config {
-            min_data_length : 192,
+            min_data_length: 192,
             ..Default::default()
         };
 
@@ -227,10 +227,8 @@ mod tests {
         let mut profile_rx = Profile7m::new(config);
 
         let mut data = vec![
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
         profile_tx.source_id = 0x00123456;
         profile_tx.message_result = 1;

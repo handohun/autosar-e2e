@@ -10,7 +10,7 @@
 //! [DATA ... | CRC(1B) | HDR(1B) | DATA ...]
 //! - HDR (bits 7..4) : DI_hi_nibble(nibble mode) OR data(both mode)
 //! - HDR (bits 3..0) : counter
-//! 
+//!
 //! # Modes
 //!
 //! Profile 11 supports two main modes:
@@ -18,7 +18,7 @@
 //! - **Nibble(11C)**: high 4-bit is explicit in the header (1..=0xE recommended), low 8-bit is implicit (in CRC).
 
 use crate::{E2EError, E2EProfile, E2EResult, E2EStatus};
-use crc::{Crc, Algorithm};
+use crc::{Algorithm, Crc};
 
 // Constants
 const NIBBLE_MASK: u8 = 0x0F;
@@ -29,27 +29,27 @@ const BITS_PER_BYTE: u8 = 8;
 const BITS_PER_NIBBLE: u8 = 4;
 
 // Profile 11 uses CRC-8-SAE-J1850 with custom parameters
-const CRC8_ALGO: Algorithm<u8> = Algorithm { 
-    width: 8, 
-    poly: 0x1d, 
-    init: 0x00, 
-    refin: false, 
-    refout: false, 
-    xorout: 0x00, 
-    check: 0x4b, 
-    residue: 0xc4 
+const CRC8_ALGO: Algorithm<u8> = Algorithm {
+    width: 8,
+    poly: 0x1d,
+    init: 0x00,
+    refin: false,
+    refout: false,
+    xorout: 0x00,
+    check: 0x4b,
+    residue: 0xc4,
 };
 
 /// Data-ID mode for Profile 11.
-/// 
+///
 /// # Variants
 ///
-/// * `Both` - Profile 11A: The complete 16-bit Data-ID is only used 
-///   implicitly for CRC calculation. The header preserves the original 
+/// * `Both` - Profile 11A: The complete 16-bit Data-ID is only used
+///   implicitly for CRC calculation. The header preserves the original
 ///   upper nibble of the data.
 ///
-/// * `Nibble` - Profile 11C: The upper 4 bits of the Data-ID are 
-///   stored explicitly in the header, while the lower 8 bits are used 
+/// * `Nibble` - Profile 11C: The upper 4 bits of the Data-ID are
+///   stored explicitly in the header, while the lower 8 bits are used
 ///   implicitly for CRC calculation. Recommended range: 0x100-0xE00.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Profile11IdMode {
@@ -67,7 +67,7 @@ pub struct Profile11Config {
     /// Profile mode(11A or 11C)
     pub mode: Profile11IdMode,
     /// A unique identifier
-    pub data_id : u16,
+    pub data_id: u16,
     /// Bit offset of the low nibble of the high byte of Data ID
     pub nibble_offset: u8,
     /// Maximum allowed delta between consecutive counters
@@ -79,13 +79,13 @@ pub struct Profile11Config {
 impl Default for Profile11Config {
     fn default() -> Self {
         Self {
-            counter_offset: 8,     // bits
-            crc_offset: 0,          // bits
+            counter_offset: 8, // bits
+            crc_offset: 0,     // bits
             mode: Profile11IdMode::Nibble,
             data_id: 0x123,
-            nibble_offset: 12,      // bits
+            nibble_offset: 12, // bits
             max_delta_counter: 1,
-            data_length: 64,        // bits
+            data_length: 64, // bits
         }
     }
 }
@@ -111,38 +111,40 @@ impl Profile11 {
     /// Validate configuration parameters
     fn validate_config(config: &Profile11Config) -> E2EResult<()> {
         if config.data_length > MAX_DATA_LENGTH_BITS {
+            return Err(E2EError::InvalidConfiguration(format!(
+                "Maximum data length for Profile 11 is {} bits",
+                MAX_DATA_LENGTH_BITS
+            )));
+        }
+
+        if (config.data_length % BITS_PER_BYTE) != 0 {
             return Err(E2EError::InvalidConfiguration(
-                format!("Maximum data length for Profile 11 is {} bits", MAX_DATA_LENGTH_BITS)
+                "Data length shall be a multiple of 8".into(),
             ));
         }
 
-        if (config.data_length % BITS_PER_BYTE ) != 0 {
+        if config.max_delta_counter == 0 || config.max_delta_counter > COUNTER_MAX {
+            return Err(E2EError::InvalidConfiguration(format!(
+                "Max delta counter must be between 1 and {}",
+                COUNTER_MAX
+            )));
+        }
+
+        if (config.counter_offset % BITS_PER_NIBBLE) != 0 {
             return Err(E2EError::InvalidConfiguration(
-                "Data length shall be a multiple of 8".into()
+                "Counter offset shall be a multiple of 4".into(),
             ));
         }
 
-        if config.max_delta_counter == 0 || config.max_delta_counter > COUNTER_MAX  {
+        if (config.crc_offset % BITS_PER_BYTE) != 0 {
             return Err(E2EError::InvalidConfiguration(
-                format!("Max delta counter must be between 1 and {}", COUNTER_MAX )
-            ));
-        }
-
-        if (config.counter_offset % BITS_PER_NIBBLE ) != 0 {
-            return Err(E2EError::InvalidConfiguration(
-                "Counter offset shall be a multiple of 4".into()
-            ));
-        }
-
-        if (config.crc_offset % BITS_PER_BYTE  ) != 0 {
-            return Err(E2EError::InvalidConfiguration(
-                "Crc offset shall be a multiple of 8".into()
+                "Crc offset shall be a multiple of 8".into(),
             ));
         }
 
         if config.mode == Profile11IdMode::Nibble && config.nibble_offset % 4 != 0 {
             return Err(E2EError::InvalidConfiguration(
-                "Nibble offset must be a multiple of 4 bits".into()
+                "Nibble offset must be a multiple of 4 bits".into(),
             ));
         }
 
@@ -159,21 +161,21 @@ impl Profile11 {
         }
         Ok(())
     }
-    fn write_nibble_data(&self, offset: u8, set_value: u8, data: &mut[u8]) {
+    fn write_nibble_data(&self, offset: u8, set_value: u8, data: &mut [u8]) {
         let byte_idx = (offset >> 3) as usize;
         let shift = offset & 0x07;
 
-        let mask =!(NIBBLE_MASK << shift);
+        let mask = !(NIBBLE_MASK << shift);
         let val = (set_value & NIBBLE_MASK) << shift;
-        data[byte_idx] = (data[byte_idx] & mask) | val;        
+        data[byte_idx] = (data[byte_idx] & mask) | val;
     }
     fn read_nibble_data(&self, offset: u8, data: &[u8]) -> u8 {
-        let byte_idx  = (offset >> 3) as usize;
-        let shift    = offset & 0x07;
+        let byte_idx = (offset >> 3) as usize;
+        let shift = offset & 0x07;
 
         (data[byte_idx] >> shift) & NIBBLE_MASK
     }
-    fn write_crc(&self, calculated_crc: u8, data: &mut[u8]) {
+    fn write_crc(&self, calculated_crc: u8, data: &mut [u8]) {
         let byte_position = (self.config.crc_offset / BITS_PER_BYTE) as usize;
         data[byte_position] = calculated_crc;
     }
@@ -196,10 +198,9 @@ impl Profile11 {
         if self.config.crc_offset > 0 {
             let offset_byte = (self.config.crc_offset / BITS_PER_BYTE) as usize;
             digest.update(&data[0..offset_byte]);
-            digest.update(&data[(offset_byte+1)..]);
-        }
-        else {
-            digest.update(&data[1..]);            
+            digest.update(&data[(offset_byte + 1)..]);
+        } else {
+            digest.update(&data[1..]);
         }
     }
     fn compute_crc(&self, data: &[u8]) -> u8 {
@@ -214,11 +215,12 @@ impl Profile11 {
     }
     fn do_checks(&mut self, check_items: Profile11Check) -> E2EStatus {
         if check_items.calculated_crc != check_items.rx_crc {
-            return E2EStatus::CrcError
+            return E2EStatus::CrcError;
         }
-        if (self.config.mode == Profile11IdMode::Nibble) && ((self.config.data_id >> BITS_PER_BYTE) as u8 & NIBBLE_MASK) != check_items.rx_nibble
+        if (self.config.mode == Profile11IdMode::Nibble)
+            && ((self.config.data_id >> BITS_PER_BYTE) as u8 & NIBBLE_MASK) != check_items.rx_nibble
         {
-            return E2EStatus::DataIdError
+            return E2EStatus::DataIdError;
         }
         let status = self.validate_counter(check_items.rx_counter);
         self.counter = check_items.rx_counter;
@@ -239,8 +241,7 @@ impl Profile11 {
         if delta == 0 {
             if self.initialized {
                 E2EStatus::Repeated
-            }
-            else {
+            } else {
                 E2EStatus::Ok
             }
         } else if delta == 1 {
@@ -269,7 +270,11 @@ impl E2EProfile for Profile11 {
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()> {
         self.validate_length(data.len())?;
         if self.config.mode == Profile11IdMode::Nibble {
-            self.write_nibble_data(self.config.nibble_offset, self.config.data_id.to_le_bytes()[1], data);
+            self.write_nibble_data(
+                self.config.nibble_offset,
+                self.config.data_id.to_le_bytes()[1],
+                data,
+            );
         }
         self.write_nibble_data(self.config.counter_offset, self.counter, data);
         let calculated_crc = self.compute_crc(data);
@@ -281,10 +286,12 @@ impl E2EProfile for Profile11 {
     fn check(&mut self, data: &[u8]) -> E2EResult<E2EStatus> {
         // Check data length
         self.validate_length(data.len())?;
-        let check_items = Profile11Check{rx_nibble : self.read_nibble_data(self.config.nibble_offset, data),
-                                                        rx_counter : self.read_nibble_data(self.config.counter_offset, data),
-                                                        rx_crc : self.read_crc(data),
-                                                        calculated_crc : self.compute_crc(data)};
+        let check_items = Profile11Check {
+            rx_nibble: self.read_nibble_data(self.config.nibble_offset, data),
+            rx_counter: self.read_nibble_data(self.config.counter_offset, data),
+            rx_crc: self.read_crc(data),
+            calculated_crc: self.compute_crc(data),
+        };
         let status = self.do_checks(check_items);
         if !self.initialized && matches!(status, E2EStatus::Ok | E2EStatus::OkSomeLost) {
             self.initialized = true;
@@ -299,9 +306,9 @@ mod tests {
     #[test]
     fn test_profile11_basic_both_example() {
         let config = Profile11Config {
-            max_delta_counter : 1,
-            mode : Profile11IdMode::Both,
-            data_id : 0x123,
+            max_delta_counter: 1,
+            mode: Profile11IdMode::Both,
+            data_id: 0x123,
             ..Default::default()
         };
 
@@ -323,9 +330,9 @@ mod tests {
     #[test]
     fn test_profile11_basic_nibble_example() {
         let config = Profile11Config {
-            max_delta_counter : 1,
-            mode : Profile11IdMode::Nibble,
-            data_id : 0x123,
+            max_delta_counter: 1,
+            mode: Profile11IdMode::Nibble,
+            data_id: 0x123,
             ..Default::default()
         };
 
@@ -346,20 +353,23 @@ mod tests {
     #[test]
     fn test_profile11_offset_nibble_example() {
         let config = Profile11Config {
-            max_delta_counter : 1,
+            max_delta_counter: 1,
             crc_offset: 64,
             counter_offset: 72,
             nibble_offset: 76,
-            data_length : 128,
-            mode : Profile11IdMode::Nibble,
-            data_id : 0x123,
+            data_length: 128,
+            mode: Profile11IdMode::Nibble,
+            data_id: 0x123,
             ..Default::default()
         };
 
         let mut profile_tx = Profile11::new(config.clone());
         let mut profile_rx = Profile11::new(config);
 
-        let mut data1 = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let mut data1 = vec![
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00,
+        ];
         profile_tx.protect(&mut data1).unwrap();
         assert_eq!(data1[8], 0x7d);
         assert_eq!(data1[9], 0x10);
@@ -377,14 +387,20 @@ mod tests {
     fn test_profile11_counter_wraparound() {
         let mut profile = Profile11::new(Profile11Config::default());
         let mut data = vec![0x00; 8];
-        for _ in 0..=COUNTER_MAX+1 {
+        for _ in 0..=COUNTER_MAX + 1 {
             profile.protect(&mut data).unwrap();
         }
-        assert_eq!(profile.read_nibble_data(profile.config.counter_offset, &data), 0x00);
+        assert_eq!(
+            profile.read_nibble_data(profile.config.counter_offset, &data),
+            0x00
+        );
     }
     #[test]
     fn test_profile11_some_lost_ok() {
-        let config = Profile11Config { max_delta_counter: 3, ..Default::default() };
+        let config = Profile11Config {
+            max_delta_counter: 3,
+            ..Default::default()
+        };
         let mut tx = Profile11::new(config.clone());
         let mut rx = Profile11::new(config);
 
@@ -399,7 +415,10 @@ mod tests {
     }
     #[test]
     fn test_profile11_wrong_sequence() {
-        let config = Profile11Config { max_delta_counter: 1, ..Default::default() };
+        let config = Profile11Config {
+            max_delta_counter: 1,
+            ..Default::default()
+        };
         let mut tx = Profile11::new(config.clone());
         let mut rx = Profile11::new(config);
 
@@ -421,5 +440,4 @@ mod tests {
         assert_eq!(profile_rx.check(&data).unwrap(), E2EStatus::Ok);
         assert_eq!(profile_rx.check(&data).unwrap(), E2EStatus::Repeated);
     }
-
 }

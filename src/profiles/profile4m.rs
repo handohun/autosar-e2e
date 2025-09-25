@@ -6,7 +6,7 @@
 use crate::profiles::profile4::{Profile4, Profile4Config}; // Reuse Profile4Config
 use crate::{E2EProfile, E2EResult, E2EStatus};
 
-const BITS_PER_BYTE : u16 = 8;
+const BITS_PER_BYTE: u16 = 8;
 
 /// Check Item for E2E Profile 4
 #[derive(Debug, Clone)]
@@ -29,7 +29,7 @@ pub struct Profile4m {
 impl Profile4m {
     fn write_source_id(&self, data: &mut [u8]) {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        data[offset+12..=offset+15].copy_from_slice(&self.source_id.to_be_bytes());
+        data[offset + 12..=offset + 15].copy_from_slice(&self.source_id.to_be_bytes());
     }
     fn write_message_type(&self, data: &mut [u8]) {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
@@ -41,7 +41,12 @@ impl Profile4m {
     }
     fn read_source_id(&self, data: &[u8]) -> u32 {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
-        u32::from_be_bytes([data[offset + 12], data[offset + 13], data[offset + 14], data[offset + 15]]) & 0x0FFFFFFF
+        u32::from_be_bytes([
+            data[offset + 12],
+            data[offset + 13],
+            data[offset + 14],
+            data[offset + 15],
+        ]) & 0x0FFFFFFF
     }
     fn read_message_type(&self, data: &[u8]) -> u8 {
         let offset = (self.config.offset / BITS_PER_BYTE) as usize;
@@ -102,7 +107,6 @@ impl E2EProfile for Profile4m {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -112,9 +116,8 @@ mod tests {
         let mut profile_rx = Profile4m::new(Profile4Config::default());
 
         let mut data = vec![
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
         profile_tx.source_id = 0x00123456;
         profile_tx.message_result = 0;
@@ -152,9 +155,8 @@ mod tests {
         let mut profile_rx = Profile4m::new(Profile4Config::default());
 
         let mut data = vec![
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
         profile_tx.source_id = 0x00123456;
         profile_tx.message_result = 0;
@@ -192,9 +194,8 @@ mod tests {
         let mut profile_rx = Profile4m::new(Profile4Config::default());
 
         let mut data = vec![
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
         profile_tx.source_id = 0x00123456;
         profile_tx.message_result = 1;
