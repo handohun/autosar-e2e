@@ -3,8 +3,8 @@
 [![Crates.io](https://img.shields.io/crates/v/autosar-e2e.svg)](https://crates.io/crates/autosar-e2e)
 [![Documentation](https://docs.rs/autosar-e2e/badge.svg)](https://docs.rs/autosar-e2e)
 [![License](https://img.shields.io/crates/l/autosar-e2e.svg)](LICENSE)
-[![Build Status](https://github.com/your-org/autosar-e2e/workflows/CI/badge.svg)](https://github.com/your-org/autosar-e2e/actions)
-[![Coverage](https://img.shields.io/codecov/c/github/your-org/autosar-e2e)](https://codecov.io/gh/your-org/autosar-e2e)
+[![Build Status](https://github.com/handohun/autosar-e2e/workflows/CI/badge.svg)](https://github.com/handohun/autosar-e2e/actions)
+[![Coverage](https://img.shields.io/codecov/c/github/handohun/autosar-e2e)](https://codecov.io/gh/handohun/autosar-e2e)
 
 A **high-performance**, **memory-safe** Rust implementation of the AUTOSAR E2E (End-to-End) Protection Protocol for safety-critical automotive communication systems.
 
@@ -26,6 +26,7 @@ This library implements the AUTOSAR E2E protection mechanism which provides **en
 | Profile | Description | CRC | Counter | Data ID | Status |
 |---------|-------------|-----|---------|---------|--------|
 | **Profile 4** | Large packets, low overhead | 32-bit | 16-bit | 32-bit | Complete |
+| **Profile 4M** | Profile 4 + message metadata | 32-bit | 16-bit | 32-bit | Complete |
 | **Profile 5** | Small packets, minimal overhead | 16-bit | 8-bit | 16-bit | Complete |
 | **Profile 6** | Dynamic size data | 16-bit | 8-bit | 16-bit | Complete |
 | **Profile 7** | High-integrity protection | 64-bit | 32-bit | 32-bit | Complete |
@@ -50,7 +51,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-autosar-e2e = "0.5.0"
+autosar-e2e = "0.6.0"
 ```
 
 ## Quick Start
@@ -280,10 +281,10 @@ let config = ProfileConfig {
 - [x] Code refactoring and optimization
 - [x] Documentation and examples
 - [x] Profile 7M implementation
+- [x] Profile 4M implementation
 
 ### Future
 
-- [x] Profile 4M implementation
 - [ ] Performance benchmarks and optimization
 - [ ] Async/await support for non-blocking operations
 - [ ] Custom derive macros for config validation
