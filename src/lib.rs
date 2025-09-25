@@ -38,12 +38,31 @@
 //! ```
 
 use thiserror::Error;
+
+#[path = "common/counter.rs"]
+pub mod counter;
+#[path = "common/crc_ops.rs"]
+pub mod crc_ops;
+#[path = "common/field_ops.rs"]
+pub mod field_ops;
+#[path = "common/validation.rs"]
+pub mod validation;
+
+#[path = "profiles/profile11.rs"]
 pub mod profile11;
+#[path = "profiles/profile22.rs"]
 pub mod profile22;
+#[path = "profiles/profile4.rs"]
 pub mod profile4;
+#[path = "profiles/profile5.rs"]
 pub mod profile5;
+#[path = "profiles/profile6.rs"]
 pub mod profile6;
+#[path = "profiles/profile7.rs"]
 pub mod profile7;
+#[path = "profiles/profile7m.rs"]
+pub mod profile7m;
+#[path = "profiles/profile8.rs"]
 pub mod profile8;
 
 /// Result type for E2E operations
@@ -58,7 +77,7 @@ pub enum E2EStatus {
     CrcError,
     /// Data ID check failed - incorrect addressing
     DataIdError,
-    // Counter check failed - same counter as previous cycle 
+    // Counter check failed - same counter as previous cycle
     Repeated,
     // Counter check failed - counter is increated within allowed configured delta
     OkSomeLost,
@@ -66,6 +85,12 @@ pub enum E2EStatus {
     WrongSequence,
     /// Data Length check failed - incorrect length
     DataLengthError,
+    /// Source ID check failed - incorrect addressing
+    SourceIdError,
+    /// Message Type check failed
+    MessageTypeError,
+    /// Message Result check failed
+    MessageResultError,
 }
 
 /// E2E Error types
@@ -74,11 +99,11 @@ pub enum E2EError {
     /// Invalid configuration provided
     #[error("Invalid configuration: {0}")]
     InvalidConfiguration(String),
-        
+
     /// Invalid data format
     #[error("Invalid data format: {0}")]
     InvalidDataFormat(String),
-    
+
     /// Profile-specific error
     #[error("Profile-specific error: {0}")]
     ProfileSpecificError(String),
