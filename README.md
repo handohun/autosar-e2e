@@ -205,13 +205,23 @@ Current test coverage: **96%** with **26** test cases covering:
 
 The library is optimized for automotive real-time constraints:
 
-| Operation | Profile 4 | Profile 7 | Profile 11 |
-|-----------|-----------|-----------|------------|
-| **Protect** | ~2μs | ~3μs | ~1μs |
-| **Check** | ~2μs | ~3μs | ~1μs |
-| **Memory** | Zero-copy | Zero-copy | Zero-copy |
+| Profile | Data Size | Protect | Check | Memory |
+|---------|-----------|---------|-------|--------|
+| **Profile 4** | 16 bytes | 258ns | 225ns | Zero-copy |
+| **Profile 5** | 8 bytes | 189ns | 161ns | Zero-copy |
+| **Profile 7** | 28 bytes | 512ns | 474ns | Zero-copy |
+| **Profile 11** | 5 bytes | 71ns | 46ns | Zero-copy |
 
-*Benchmarks run on Intel i7-9750H @ 2.60GHz*
+*Benchmarks run on modern x86-64 hardware using Criterion.rs*
+
+### Performance Scaling by Data Size
+
+| Profile 4 | 16B | 64B | 256B | 1024B |
+|-----------|-----|-----|------|-------|
+| **Protect** | 258ns | 335ns | 647ns | 1.92μs |
+| **Check** | 225ns | 300ns | 620ns | 1.88μs |
+
+The library demonstrates excellent scalability with sub-microsecond performance for typical automotive message sizes, making it suitable for real-time safety-critical systems.
 
 ## Configuration Examples
 
