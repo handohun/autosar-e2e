@@ -130,7 +130,7 @@ impl Profile11 {
             )));
         }
 
-        if (config.counter_offset % BITS_PER_NIBBLE) != 0 {
+        if !config.counter_offset.is_multiple_of(BITS_PER_NIBBLE) {
             return Err(E2EError::InvalidConfiguration(
                 "Counter offset shall be a multiple of 4".into(),
             ));
