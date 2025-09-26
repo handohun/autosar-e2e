@@ -1,19 +1,19 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
-use autosar_e2e::{E2EProfile, E2EResult};
+use autosar_e2e::profile11::{Profile11, Profile11Config, Profile11IdMode};
+use autosar_e2e::profile22::{Profile22, Profile22Config};
 use autosar_e2e::profile4::{Profile4, Profile4Config};
 use autosar_e2e::profile5::{Profile5, Profile5Config};
 use autosar_e2e::profile6::{Profile6, Profile6Config};
 use autosar_e2e::profile7::{Profile7, Profile7Config};
 use autosar_e2e::profile8::{Profile8, Profile8Config};
-use autosar_e2e::profile11::{Profile11, Profile11Config, Profile11IdMode};
-use autosar_e2e::profile22::{Profile22, Profile22Config};
+use autosar_e2e::{E2EProfile, E2EResult};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 
 fn benchmark_profile4(c: &mut Criterion) {
     let config = Profile4Config {
         data_id: 0x12345678,
         max_delta_counter: 1,
         min_data_length: 96,    // 12 bytes minimum
-        max_data_length: 32768,  // 4096 bytes maximum
+        max_data_length: 32768, // 4096 bytes maximum
         ..Default::default()
     };
 
@@ -47,7 +47,7 @@ fn benchmark_profile4(c: &mut Criterion) {
 
 fn benchmark_profile5(c: &mut Criterion) {
     let config = Profile5Config {
-        data_length: 8 * 8,    // 8 bytes total
+        data_length: 8 * 8, // 8 bytes total
         data_id: 0x123,
         max_delta_counter: 1,
         offset: 0,
@@ -82,8 +82,8 @@ fn benchmark_profile6(c: &mut Criterion) {
     let config = Profile6Config {
         data_id: 0x1234,
         offset: 0,
-        min_data_length: 32*8,
-        max_data_length: 256*8,
+        min_data_length: 32 * 8,
+        max_data_length: 256 * 8,
         max_delta_counter: 1,
     };
 

@@ -49,7 +49,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-autosar-e2e = "0.6.2"
+autosar-e2e = "0.6.3"
 ```
 
 ## Quick Start
@@ -124,6 +124,7 @@ src/
 ├── lib.rs              # Main library interface
 ├── profiles/           # All E2E profile implementations
 │   ├── profile4.rs     # Large packets, 32-bit CRC
+│   ├── profile4m.rs    # Profile 4 + message metadata
 │   ├── profile5.rs     # Small packets, 16-bit CRC
 │   ├── profile6.rs     # Dynamic size, 16-bit CRC
 │   ├── profile7.rs     # High integrity, 64-bit CRC
@@ -131,10 +132,7 @@ src/
 │   ├── profile8.rs     # Flexible protection, 32-bit CRC
 │   ├── profile11.rs    # Nibble/Both variants
 │   └── profile22.rs    # Enhanced protection
-└── common/             # Shared helper modules
-    ├── counter.rs      # Generic counter validation
-    ├── field_ops.rs    # Binary field operations
-    └── validation.rs   # Common validation functions
+└── profiles.rs         # Profiles module
 ```
 
 ### Trait-Based Design
@@ -155,15 +153,6 @@ pub trait E2EProfile {
     fn check(&mut self, data: &[u8]) -> E2EResult<E2EStatus>;
 }
 ```
-
-### Refactored Common Helpers
-
-The library has been refactored to eliminate code duplication:
-
-- **60-70% less duplicate code** across profiles
-- **Generic counter operations** for u8, u16, u32 types
-- **Shared field operations** for consistent byte handling
-- **Centralized validation** with uniform error messages
 
 ## Testing
 
@@ -193,7 +182,7 @@ cargo tarpaulin --out Html
 open tarpaulin-report.html
 ```
 
-Current test coverage: **96%** with **26** test cases covering:
+Current test coverage: **83%** with **32** test cases covering:
 
 - Basic protection/check cycles
 - Counter wraparound scenarios
@@ -290,12 +279,11 @@ let config = ProfileConfig {
 - [x] Documentation and examples
 - [x] Profile 7M implementation
 - [x] Profile 4M implementation
+- [x] Peformance benchmarks
 
 ### Future
 
-- [ ] Performance benchmarks and optimization
-- [ ] Async/await support for non-blocking operations
-- [ ] Custom derive macros for config validation
+- [ ] code optimization
 
 ## Contributing
 
@@ -305,7 +293,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/autosar-e2e
+git clone https://github.com/handohun/autosar-e2e
 cd autosar-e2e
 
 # Run tests
@@ -335,7 +323,6 @@ at your option.
 - [AUTOSAR E2E Protocol Specification](https://www.autosar.org/standards/classic-platform/)
 - [AUTOSAR Classic Platform](https://www.autosar.org/standards/classic-platform/)
 - [Rust Embedded Working Group](https://github.com/rust-embedded/wg)
-- [Automotive Rust](https://github.com/rust-automotive)
 
 ## Disclaimer
 
@@ -347,4 +334,4 @@ For **production safety-critical systems**, please ensure appropriate validation
 
 **Made with care for the automotive industry**
 
-[Report Bug](https://github.com/your-org/autosar-e2e/issues) • [Request Feature](https://github.com/your-org/autosar-e2e/issues) • [Discussions](https://github.com/your-org/autosar-e2e/discussions)
+[Report Bug](https://github.com/handohun/autosar-e2e/issues) • [Request Feature](https://github.com/handohun/autosar-e2e/issues) • [Discussions](https://github.com/handohun/autosar-e2e/discussions)
