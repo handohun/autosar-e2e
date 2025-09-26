@@ -3,9 +3,7 @@
 [![Crates.io](https://img.shields.io/crates/v/autosar-e2e.svg)](https://crates.io/crates/autosar-e2e)
 [![Documentation](https://docs.rs/autosar-e2e/badge.svg)](https://docs.rs/autosar-e2e)
 [![License](https://img.shields.io/crates/l/autosar-e2e.svg)](LICENSE)
-[![CI](https://github.com/handohun/autosar-e2e/workflows/CI/badge.svg)](https://github.com/handohun/autosar-e2e/actions?query=workflow%3ACI)
-[![Security Audit](https://github.com/handohun/autosar-e2e/workflows/Security%20Audit/badge.svg)](https://github.com/handohun/autosar-e2e/actions?query=workflow%3A%22Security+Audit%22)
-[![Benchmark](https://github.com/handohun/autosar-e2e/workflows/Benchmark/badge.svg)](https://github.com/handohun/autosar-e2e/actions?query=workflow%3ABenchmark)
+[![CI](https://github.com/handohun/autosar-e2e/actions/workflows/ci.yml/badge.svg)](https://github.com/handohun/autosar-e2e/actions/workflows/ci.yml)
 
 A **high-performance**, **memory-safe** Rust implementation of the AUTOSAR E2E (End-to-End) Protection Protocol for safety-critical automotive communication systems.
 
@@ -166,8 +164,6 @@ pub trait E2EProfile {
 | **Linux** | Stable | Pass | Pass | ![Ubuntu](https://img.shields.io/badge/Ubuntu-Passing-brightgreen) |
 | **Windows** | Stable | Pass | Pass | ![Windows](https://img.shields.io/badge/Windows-Passing-brightgreen) |
 | **macOS** | Stable | Pass | Pass | ![macOS](https://img.shields.io/badge/macOS-Passing-brightgreen) |
-| **Linux** | Beta | Pass | Pass | ![Beta](https://img.shields.io/badge/Beta-Passing-brightgreen) |
-| **Linux** | Nightly | Pass | Pass | ![Nightly](https://img.shields.io/badge/Nightly-Passing-brightgreen) |
 
 ### Automated Quality Checks
 
@@ -372,7 +368,8 @@ at your option.
 
 ## References and Resources
 
-- [AUTOSAR E2E Protocol Specification](https://www.autosar.org/standards/classic-platform/)
+- [AUTOSAR E2E Protocol Specification](https://www.autosar.org/fileadmin/standards/R20-11/FO/AUTOSAR_PRS_E2EProtocol.pdf)
+- [AUTOSAR CRC Routines Specification](https://www.autosar.org/fileadmin/standards/R22-11/CP/AUTOSAR_SWS_CRCLibrary.pdf)
 - [AUTOSAR Classic Platform](https://www.autosar.org/standards/classic-platform/)
 - [Rust Embedded Working Group](https://github.com/rust-embedded/wg)
 
