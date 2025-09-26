@@ -3,8 +3,6 @@
 [![Crates.io](https://img.shields.io/crates/v/autosar-e2e.svg)](https://crates.io/crates/autosar-e2e)
 [![Documentation](https://docs.rs/autosar-e2e/badge.svg)](https://docs.rs/autosar-e2e)
 [![License](https://img.shields.io/crates/l/autosar-e2e.svg)](LICENSE)
-[![Build Status](https://github.com/handohun/autosar-e2e/workflows/CI/badge.svg)](https://github.com/handohun/autosar-e2e/actions)
-[![Coverage](https://img.shields.io/codecov/c/github/handohun/autosar-e2e)](https://codecov.io/gh/handohun/autosar-e2e)
 
 A **high-performance**, **memory-safe** Rust implementation of the AUTOSAR E2E (End-to-End) Protection Protocol for safety-critical automotive communication systems.
 
