@@ -16,7 +16,7 @@
 //!
 //! ```rust
 //! use autosar_e2e::{E2EProfile, E2EResult};
-//! use autosar_e2e::profiles::profile11::{Profile11, Profile11Config, Profile11IdMode};
+//! use autosar_e2e::profile11::{Profile11, Profile11Config, Profile11IdMode};
 //!
 //! // Create a Profile 11 configuration
 //! let config = Profile11Config {
@@ -39,7 +39,16 @@
 
 use thiserror::Error;
 
-pub mod profiles;
+mod profiles;
+pub use profiles::profile11;
+pub use profiles::profile22;
+pub use profiles::profile4;
+pub use profiles::profile4m;
+pub use profiles::profile5;
+pub use profiles::profile6;
+pub use profiles::profile7;
+pub use profiles::profile7m;
+pub use profiles::profile8;
 
 /// Result type for E2E operations
 pub type E2EResult<T> = Result<T, E2EError>;

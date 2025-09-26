@@ -51,7 +51,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-autosar-e2e = "0.6.0"
+autosar-e2e = "0.6.1"
 ```
 
 ## Quick Start

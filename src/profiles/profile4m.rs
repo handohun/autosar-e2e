@@ -3,7 +3,7 @@
 //! Profile 4M is identical to Profile 4 but includes additional fields
 //! in CRC calculation: message_type, message_result, and source_id
 
-use crate::profiles::profile4::{Profile4, Profile4Config}; // Reuse Profile4Config
+use crate::profile4::{Profile4, Profile4Config}; // Reuse Profile4Config
 use crate::{E2EProfile, E2EResult, E2EStatus};
 
 const BITS_PER_BYTE: u16 = 8;
@@ -76,7 +76,7 @@ impl E2EProfile for Profile4m {
     fn new(config: Self::Config) -> Self {
         // Validate using Profile4's validation
         Self {
-            base: crate::profiles::profile4::Profile4::new(config.clone()), // This validates config
+            base: crate::profile4::Profile4::new(config.clone()), // This validates config
             config,
             message_type: 0x00,
             message_result: 0x00,
