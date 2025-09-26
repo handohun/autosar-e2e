@@ -5,7 +5,7 @@ use autosar_e2e::profile5::{Profile5, Profile5Config};
 use autosar_e2e::profile6::{Profile6, Profile6Config};
 use autosar_e2e::profile7::{Profile7, Profile7Config};
 use autosar_e2e::profile8::{Profile8, Profile8Config};
-use autosar_e2e::{E2EProfile, E2EResult};
+use autosar_e2e::E2EProfile;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 
 fn benchmark_profile4(c: &mut Criterion) {
@@ -266,7 +266,7 @@ fn benchmark_all_profiles_comparison(c: &mut Criterion) {
         ..Default::default()
     };
     let mut profile4 = Profile4::new(config4);
-    let mut data4 = vec![0u8; 64];
+    let data4 = vec![0u8; 64];
 
     group.bench_function("Profile4_64B_protect", |b| {
         b.iter(|| {
@@ -283,7 +283,7 @@ fn benchmark_all_profiles_comparison(c: &mut Criterion) {
         offset: 0,
     };
     let mut profile5 = Profile5::new(config5);
-    let mut data5 = vec![0u8; 8];
+    let data5 = vec![0u8; 8];
 
     group.bench_function("Profile5_8B_protect", |b| {
         b.iter(|| {
@@ -301,7 +301,7 @@ fn benchmark_all_profiles_comparison(c: &mut Criterion) {
         max_delta_counter: 5,
     };
     let mut profile7 = Profile7::new(config7);
-    let mut data7 = vec![0u8; 64];
+    let data7 = vec![0u8; 64];
 
     group.bench_function("Profile7_64B_protect", |b| {
         b.iter(|| {
@@ -318,7 +318,7 @@ fn benchmark_all_profiles_comparison(c: &mut Criterion) {
         ..Default::default()
     };
     let mut profile11 = Profile11::new(config11);
-    let mut data11 = vec![0x00, 0x00, 0x12, 0x34, 0x56];
+    let data11 = vec![0x00, 0x00, 0x12, 0x34, 0x56];
 
     group.bench_function("Profile11_5B_protect", |b| {
         b.iter(|| {

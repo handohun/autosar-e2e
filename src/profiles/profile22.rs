@@ -67,7 +67,7 @@ pub struct Profile22 {
 impl Profile22 {
     /// Validate configuration parameters
     fn validate_config(config: &Profile22Config) -> E2EResult<()> {
-        if (config.data_length % BITS_PER_BYTE) != 0 {
+        if !config.data_length.is_multiple_of(BITS_PER_BYTE) {
             return Err(E2EError::InvalidConfiguration(
                 "Data length shall be a multiple of 8".into(),
             ));

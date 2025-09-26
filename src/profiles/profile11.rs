@@ -117,7 +117,7 @@ impl Profile11 {
             )));
         }
 
-        if (config.data_length % BITS_PER_BYTE) != 0 {
+        if !config.data_length.is_multiple_of(BITS_PER_BYTE) {
             return Err(E2EError::InvalidConfiguration(
                 "Data length shall be a multiple of 8".into(),
             ));
@@ -136,13 +136,13 @@ impl Profile11 {
             ));
         }
 
-        if (config.crc_offset % BITS_PER_BYTE) != 0 {
+        if !config.crc_offset.is_multiple_of(BITS_PER_BYTE) {
             return Err(E2EError::InvalidConfiguration(
                 "Crc offset shall be a multiple of 8".into(),
             ));
         }
 
-        if config.mode == Profile11IdMode::Nibble && config.nibble_offset % 4 != 0 {
+        if config.mode == Profile11IdMode::Nibble && !config.nibble_offset.is_multiple_of(4) {
             return Err(E2EError::InvalidConfiguration(
                 "Nibble offset must be a multiple of 4 bits".into(),
             ));
@@ -360,7 +360,6 @@ mod tests {
             data_length: 128,
             mode: Profile11IdMode::Nibble,
             data_id: 0x123,
-            ..Default::default()
         };
 
         let mut profile_tx = Profile11::new(config.clone());
