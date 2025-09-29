@@ -3,7 +3,7 @@
 //! Profile 22 is designed for protecting small data packets
 //! with low overhead. It uses:
 //! - 8-bit CRC for data integrity
-//! - 4-bit counter for sequence checking (0-14)
+//! - 4-bit counter for sequence checking (0-15)
 //! - 16-bit Data ID for masquerade prevention
 //!
 //! # Data layout
@@ -18,7 +18,6 @@ const COUNTER_MASK: u8 = 0x0F;
 const COUNTER_MAX: u8 = 15;
 const COUNTER_MODULO: u8 = 16;
 const BITS_PER_BYTE: usize = 8;
-const HEADER_LENGTH_BYTES: usize = 2;
 const DATA_ID_NUMBER: usize = 16;
 
 /// Configuration for E2E Profile 22
@@ -48,7 +47,7 @@ impl Default for Profile22Config {
     }
 }
 
-/// Check Item for E2E Profile 4
+/// Check Item for E2E Profile 22
 #[derive(Debug, Clone)]
 pub struct Profile22Check {
     rx_counter: u8,
@@ -82,20 +81,13 @@ impl Profile22 {
 
         Ok(())
     }
-    /// Validate data length against min/max constraints
+    /// Validate data length
     fn validate_length(&self, len: usize) -> E2EResult<()> {
         let expected_bytes = self.config.data_length / BITS_PER_BYTE;
         if len != expected_bytes {
             return Err(E2EError::InvalidDataFormat(format!(
                 "Expected {} bytes, got {} bytes",
                 expected_bytes, len
-            )));
-        }
-        let expected_bytes = self.config.offset.div_ceil(BITS_PER_BYTE) + HEADER_LENGTH_BYTES;
-        if len < expected_bytes {
-            return Err(E2EError::InvalidDataFormat(format!(
-                "Data Length shall be equal to or larger than offset + {} : Expected {} bytes, got {} bytes",
-                HEADER_LENGTH_BYTES, expected_bytes, len
             )));
         }
         Ok(())
@@ -165,10 +157,10 @@ impl Profile22 {
 impl E2EProfile for Profile22 {
     type Config = Profile22Config;
 
-    fn new(config: Self::Config) -> Self {
-        // Validate config (panic if invalid in constructor for simplicity)
-        Self::validate_config(&config).expect("Invalid Profile22 configuration");
-        Self { config, counter: 0 }
+    fn new(config: Self::Config) -> E2EResult<Self> {
+        // Validate config
+        Self::validate_config(&config)?;
+        Ok(Self { config, counter: 0 })
     }
 
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()> {
@@ -198,8 +190,8 @@ mod tests {
     use super::*;
     #[test]
     fn test_profile22_basic_example() {
-        let mut profile_tx = Profile22::new(Profile22Config::default());
-        let mut profile_rx = Profile22::new(Profile22Config::default());
+        let mut profile_tx = Profile22::new(Profile22Config::default()).unwrap();
+        let mut profile_rx = Profile22::new(Profile22Config::default()).unwrap();
 
         let mut data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         profile_tx.protect(&mut data).unwrap();
@@ -276,8 +268,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile22::new(config.clone());
-        let mut profile_rx = Profile22::new(config);
+        let mut profile_tx = Profile22::new(config.clone()).unwrap();
+        let mut profile_rx = Profile22::new(config).unwrap();
 
         let mut data1 = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

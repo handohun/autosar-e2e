@@ -8,7 +8,7 @@
 //! - 32-bit Data Length to support dynamic size data
 //!
 //! # Data layout
-//! [DATA ... | CRC(4B) | LENGTH(4B) | CONTER(4B) | ID (4B) | DATA ...]
+//! [DATA ... | CRC(4B) | LENGTH(4B) | COUNTER(4B) | ID (4B) | DATA ...]
 use crate::{E2EError, E2EProfile, E2EResult, E2EStatus};
 use crc::{Crc, CRC_32_AUTOSAR};
 
@@ -214,14 +214,14 @@ impl Profile8 {
 impl E2EProfile for Profile8 {
     type Config = Profile8Config;
 
-    fn new(config: Self::Config) -> Self {
-        // Validate config (panic if invalid in constructor for simplicity)
-        Self::validate_config(&config).expect("Invalid Profile8 configuration");
-        Self {
+    fn new(config: Self::Config) -> E2EResult<Self> {
+        // Validate config
+        Self::validate_config(&config)?;
+        Ok(Self {
             config,
             counter: 0,
             initialized: false,
-        }
+        })
     }
 
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()> {
@@ -258,9 +258,9 @@ impl E2EProfile for Profile8 {
 mod tests {
     use super::*;
     #[test]
-    fn test_profile4_basic_example() {
-        let mut profile_tx = Profile8::new(Profile8Config::default());
-        let mut profile_rx = Profile8::new(Profile8Config::default());
+    fn test_profile8_basic_example() {
+        let mut profile_tx = Profile8::new(Profile8Config::default()).unwrap();
+        let mut profile_rx = Profile8::new(Profile8Config::default()).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -297,8 +297,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile8::new(config.clone());
-        let mut profile_rx = Profile8::new(config);
+        let mut profile_tx = Profile8::new(config.clone()).unwrap();
+        let mut profile_rx = Profile8::new(config).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -334,8 +334,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile8::new(config.clone());
-        let mut profile_rx = Profile8::new(config);
+        let mut profile_tx = Profile8::new(config.clone()).unwrap();
+        let mut profile_rx = Profile8::new(config).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

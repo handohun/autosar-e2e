@@ -32,7 +32,7 @@ This library implements the AUTOSAR E2E protection mechanism which provides **en
 | **Profile 7M** | Profile 7 + message metadata | 64-bit | 32-bit | 32-bit | Complete |
 | **Profile 8** | Flexible protection | 32-bit | 32-bit | 32-bit | Complete |
 | **Profile 11** | Nibble/Both variants | 8-bit | 4-bit | Variable | Complete |
-| **Profile 22** | Enhanced protection | 8-bit | 8-bit | Variable | Complete |
+| **Profile 22** | Enhanced protection | 8-bit | 4-bit | Variable | Complete |
 
 ### Key Features
 
@@ -50,7 +50,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-autosar-e2e = "0.6.4"
+autosar-e2e = "1.0.0"
 ```
 
 ## Quick Start
@@ -72,8 +72,8 @@ fn main() -> E2EResult<()> {
     };
 
     // Create sender and receiver instances
-    let mut sender = Profile4::new(config.clone());
-    let mut receiver = Profile4::new(config);
+    let mut sender = Profile4::new(config.clone())?;
+    let mut receiver = Profile4::new(config)?;
 
     // Prepare data buffer (12 bytes minimum for Profile 4)
     let mut data = vec![0u8; 16]; // [length, counter, data_id, crc, user_data...]
@@ -113,7 +113,7 @@ let config = Profile7Config {
     max_delta_counter: 5,          // Allow up to 5 lost messages
 };
 
-let mut profile = Profile7::new(config);
+let mut profile = Profile7::new(config)?;
 ```
 
 ## Architecture
@@ -145,7 +145,7 @@ pub trait E2EProfile {
     type Config;
 
     /// Create a new profile instance with configuration
-    fn new(config: Self::Config) -> Self;
+    fn new(config: Self::Config) -> E2EResult<Self>;
 
     /// Add E2E protection to data buffer (in-place)
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()>;

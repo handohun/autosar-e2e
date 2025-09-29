@@ -8,7 +8,7 @@
 //! - 32-bit Data Length to support dynamic size data
 //!
 //! # Data layout
-//! [DATA ... | CRC(8B) | LENGTH(4B) | CONTER(4B) | ID (4B) | DATA ...]
+//! [DATA ... | CRC(8B) | LENGTH(4B) | COUNTER(4B) | ID (4B) | DATA ...]
 use crate::{E2EError, E2EProfile, E2EResult, E2EStatus};
 use crc::{Crc, CRC_64_XZ};
 
@@ -218,14 +218,14 @@ impl Profile7 {
 impl E2EProfile for Profile7 {
     type Config = Profile7Config;
 
-    fn new(config: Self::Config) -> Self {
-        // Validate config (panic if invalid in constructor for simplicity)
-        Self::validate_config(&config).expect("Invalid Profile8 configuration");
-        Self {
+    fn new(config: Self::Config) -> E2EResult<Self> {
+        // Validate config
+        Self::validate_config(&config)?;
+        Ok(Self {
             config,
             counter: 0,
             initialized: false,
-        }
+        })
     }
 
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()> {
@@ -263,8 +263,8 @@ mod tests {
     use super::*;
     #[test]
     fn test_profile7_basic_example() {
-        let mut profile_tx = Profile7::new(Profile7Config::default());
-        let mut profile_rx = Profile7::new(Profile7Config::default());
+        let mut profile_tx = Profile7::new(Profile7Config::default()).unwrap();
+        let mut profile_rx = Profile7::new(Profile7Config::default()).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -305,8 +305,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile7::new(config.clone());
-        let mut profile_rx = Profile7::new(config);
+        let mut profile_tx = Profile7::new(config.clone()).unwrap();
+        let mut profile_rx = Profile7::new(config).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -347,8 +347,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile7::new(config.clone());
-        let mut profile_rx = Profile7::new(config);
+        let mut profile_tx = Profile7::new(config.clone()).unwrap();
+        let mut profile_rx = Profile7::new(config).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

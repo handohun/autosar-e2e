@@ -8,7 +8,7 @@
 //! - 16-bit Data Length to support dynamic size data
 //!
 //! # Data layout
-//! [DATA ... | CRC(2B) | LENGTH(2B) | Counter(1B) | DATA ...]
+//! [DATA ... | CRC(2B) | LENGTH(2B) | COUNTER(1B) | DATA ...]
 use crate::{E2EError, E2EProfile, E2EResult, E2EStatus};
 use crc::{Crc, CRC_16_IBM_3740};
 
@@ -76,7 +76,7 @@ impl Profile6 {
         }
         if config.max_data_length < config.min_data_length || 4096 * 8 < config.max_data_length {
             return Err(E2EError::InvalidConfiguration(
-                "Minimum Data length shall be between MinDataLength and 4096B".into(),
+                "Maximum Data length shall be between MinDataLength and 4096B".into(),
             ));
         }
         if config.max_delta_counter == 0 || config.max_delta_counter == COUNTER_MAX {
@@ -181,14 +181,14 @@ impl Profile6 {
 impl E2EProfile for Profile6 {
     type Config = Profile6Config;
 
-    fn new(config: Self::Config) -> Self {
-        // Validate config (panic if invalid in constructor for simplicity)
-        Self::validate_config(&config).expect("Invalid Profile6 configuration");
-        Self {
+    fn new(config: Self::Config) -> E2EResult<Self> {
+        // Validate config
+        Self::validate_config(&config)?;
+        Ok(Self {
             config,
             counter: 0,
             initialized: false,
-        }
+        })
     }
 
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()> {
@@ -224,8 +224,8 @@ mod tests {
     use super::*;
     #[test]
     fn test_profile6_basic_example() {
-        let mut profile_tx = Profile6::new(Profile6Config::default());
-        let mut profile_rx = Profile6::new(Profile6Config::default());
+        let mut profile_tx = Profile6::new(Profile6Config::default()).unwrap();
+        let mut profile_rx = Profile6::new(Profile6Config::default()).unwrap();
 
         let mut data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         profile_tx.protect(&mut data).unwrap();
@@ -247,8 +247,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile6::new(config.clone());
-        let mut profile_rx = Profile6::new(config);
+        let mut profile_tx = Profile6::new(config.clone()).unwrap();
+        let mut profile_rx = Profile6::new(config).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -267,8 +267,8 @@ mod tests {
     }
     #[test]
     fn test_profile6_counter_wraparound() {
-        let mut profile_tx = Profile6::new(Profile6Config::default());
-        let mut profile_rx = Profile6::new(Profile6Config::default());
+        let mut profile_tx = Profile6::new(Profile6Config::default()).unwrap();
+        let mut profile_rx = Profile6::new(Profile6Config::default()).unwrap();
 
         let mut data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         profile_tx.protect(&mut data).unwrap();

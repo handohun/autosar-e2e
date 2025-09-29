@@ -77,7 +77,7 @@ impl Profile4 {
         }
         if config.max_data_length < config.min_data_length || 4096 * 8 < config.max_data_length {
             return Err(E2EError::InvalidConfiguration(
-                "Minimum Data length shall be between MinDataLength and 4096B".into(),
+                "Maximum Data length shall be between MinDataLength and 4096B".into(),
             ));
         }
         if config.max_delta_counter == 0 || config.max_delta_counter == COUNTER_MAX {
@@ -201,14 +201,14 @@ impl Profile4 {
 impl E2EProfile for Profile4 {
     type Config = Profile4Config;
 
-    fn new(config: Self::Config) -> Self {
-        // Validate config (panic if invalid in constructor for simplicity)
-        Self::validate_config(&config).expect("Invalid Profile4 configuration");
-        Self {
+    fn new(config: Self::Config) -> E2EResult<Self> {
+        // Validate config
+        Self::validate_config(&config)?;
+        Ok(Self {
             config,
             counter: 0,
             initialized: false,
-        }
+        })
     }
 
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()> {
@@ -246,8 +246,8 @@ mod tests {
     use super::*;
     #[test]
     fn test_profile4_basic_example() {
-        let mut profile_tx = Profile4::new(Profile4Config::default());
-        let mut profile_rx = Profile4::new(Profile4Config::default());
+        let mut profile_tx = Profile4::new(Profile4Config::default()).unwrap();
+        let mut profile_rx = Profile4::new(Profile4Config::default()).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -285,8 +285,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile4::new(config.clone());
-        let mut profile_rx = Profile4::new(config);
+        let mut profile_tx = Profile4::new(config.clone()).unwrap();
+        let mut profile_rx = Profile4::new(config).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -318,8 +318,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile4::new(config.clone());
-        let mut profile_rx = Profile4::new(config);
+        let mut profile_tx = Profile4::new(config.clone()).unwrap();
+        let mut profile_rx = Profile4::new(config).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

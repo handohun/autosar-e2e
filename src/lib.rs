@@ -18,6 +18,7 @@
 //! use autosar_e2e::{E2EProfile, E2EResult};
 //! use autosar_e2e::profile11::{Profile11, Profile11Config, Profile11IdMode};
 //!
+//! # fn main() -> E2EResult<()> {
 //! // Create a Profile 11 configuration
 //! let config = Profile11Config {
 //!     mode: Profile11IdMode::Nibble,
@@ -27,14 +28,16 @@
 //! };
 //!
 //! // Create the profile instance
-//! let mut profile = Profile11::new(config);
+//! let mut profile = Profile11::new(config)?;
 //!
 //! // Protect data
 //! let mut data = vec![0x00, 0x00, 0x12, 0x34, 0x56]; //[CRC, counter, user data ..]
-//! profile.protect(&mut data).unwrap();
+//! profile.protect(&mut data)?;
 //!
 //! // Check protected data
-//! let status = profile.check(&data).unwrap();
+//! let status = profile.check(&data)?;
+//! # Ok(())
+//! # }
 //! ```
 
 use thiserror::Error;
@@ -62,9 +65,9 @@ pub enum E2EStatus {
     CrcError,
     /// Data ID check failed - incorrect addressing
     DataIdError,
-    // Counter check failed - same counter as previous cycle
+    /// Counter check failed - same counter as previous cycle
     Repeated,
-    // Counter check failed - counter is increated within allowed configured delta
+    /// Counter check failed - counter is increased within allowed configured delta
     OkSomeLost,
     /// Counter check failed - possible message loss/duplication
     WrongSequence,
@@ -88,10 +91,6 @@ pub enum E2EError {
     /// Invalid data format
     #[error("Invalid data format: {0}")]
     InvalidDataFormat(String),
-
-    /// Profile-specific error
-    #[error("Profile-specific error: {0}")]
-    ProfileSpecificError(String),
 }
 
 // Main trait for E2E Profile implementations
@@ -106,7 +105,12 @@ pub trait E2EProfile {
     type Config;
 
     /// Create a new instance with the given configuration
-    fn new(config: Self::Config) -> Self;
+    ///
+    /// # Errors
+    /// Returns `E2EError::InvalidConfiguration` if the configuration is invalid
+    fn new(config: Self::Config) -> E2EResult<Self>
+    where
+        Self: Sized;
 
     /// Add E2E protection to the given data buffer
     ///

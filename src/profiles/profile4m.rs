@@ -73,15 +73,16 @@ impl Profile4m {
 impl E2EProfile for Profile4m {
     type Config = Profile4Config;
 
-    fn new(config: Self::Config) -> Self {
+    fn new(config: Self::Config) -> E2EResult<Self> {
         // Validate using Profile4's validation
-        Self {
-            base: crate::profile4::Profile4::new(config.clone()), // This validates config
+        let base = crate::profile4::Profile4::new(config.clone())?; // This validates config
+        Ok(Self {
+            base,
             config,
             message_type: 0x00,
             message_result: 0x00,
             source_id: 0x0a0b0c0d,
-        }
+        })
     }
 
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()> {
@@ -112,8 +113,8 @@ mod tests {
     use super::*;
     #[test]
     fn test_profile4m_basic_request_example() {
-        let mut profile_tx = Profile4m::new(Profile4Config::default());
-        let mut profile_rx = Profile4m::new(Profile4Config::default());
+        let mut profile_tx = Profile4m::new(Profile4Config::default()).unwrap();
+        let mut profile_rx = Profile4m::new(Profile4Config::default()).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -151,8 +152,8 @@ mod tests {
     }
     #[test]
     fn test_profile4m_basic_response_example() {
-        let mut profile_tx = Profile4m::new(Profile4Config::default());
-        let mut profile_rx = Profile4m::new(Profile4Config::default());
+        let mut profile_tx = Profile4m::new(Profile4Config::default()).unwrap();
+        let mut profile_rx = Profile4m::new(Profile4Config::default()).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -190,8 +191,8 @@ mod tests {
     }
     #[test]
     fn test_profile4m_basic_error_example() {
-        let mut profile_tx = Profile4m::new(Profile4Config::default());
-        let mut profile_rx = Profile4m::new(Profile4Config::default());
+        let mut profile_tx = Profile4m::new(Profile4Config::default()).unwrap();
+        let mut profile_rx = Profile4m::new(Profile4Config::default()).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

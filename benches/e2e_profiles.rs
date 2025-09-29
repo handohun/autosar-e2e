@@ -17,8 +17,8 @@ fn benchmark_profile4(c: &mut Criterion) {
         ..Default::default()
     };
 
-    let mut sender = Profile4::new(config.clone());
-    let mut receiver = Profile4::new(config);
+    let mut sender = Profile4::new(config.clone()).unwrap();
+    let mut receiver = Profile4::new(config).unwrap();
 
     let mut group = c.benchmark_group("Profile4");
 
@@ -53,8 +53,8 @@ fn benchmark_profile5(c: &mut Criterion) {
         offset: 0,
     };
 
-    let mut sender = Profile5::new(config.clone());
-    let mut receiver = Profile5::new(config);
+    let mut sender = Profile5::new(config.clone()).unwrap();
+    let mut receiver = Profile5::new(config).unwrap();
 
     let mut group = c.benchmark_group("Profile5");
     let mut data = vec![0u8; 8];
@@ -87,8 +87,8 @@ fn benchmark_profile6(c: &mut Criterion) {
         max_delta_counter: 1,
     };
 
-    let mut sender = Profile6::new(config.clone());
-    let mut receiver = Profile6::new(config);
+    let mut sender = Profile6::new(config.clone()).unwrap();
+    let mut receiver = Profile6::new(config).unwrap();
 
     let mut group = c.benchmark_group("Profile6");
 
@@ -124,8 +124,8 @@ fn benchmark_profile7(c: &mut Criterion) {
         max_delta_counter: 5,
     };
 
-    let mut sender = Profile7::new(config.clone());
-    let mut receiver = Profile7::new(config);
+    let mut sender = Profile7::new(config.clone()).unwrap();
+    let mut receiver = Profile7::new(config).unwrap();
 
     let mut group = c.benchmark_group("Profile7");
 
@@ -161,8 +161,8 @@ fn benchmark_profile8(c: &mut Criterion) {
         max_delta_counter: 10,
     };
 
-    let mut sender = Profile8::new(config.clone());
-    let mut receiver = Profile8::new(config);
+    let mut sender = Profile8::new(config.clone()).unwrap();
+    let mut receiver = Profile8::new(config).unwrap();
 
     let mut group = c.benchmark_group("Profile8");
 
@@ -197,8 +197,8 @@ fn benchmark_profile11(c: &mut Criterion) {
         ..Default::default()
     };
 
-    let mut sender = Profile11::new(config.clone());
-    let mut receiver = Profile11::new(config);
+    let mut sender = Profile11::new(config.clone()).unwrap();
+    let mut receiver = Profile11::new(config).unwrap();
 
     let mut group = c.benchmark_group("Profile11");
     let mut data = vec![0x00, 0x00, 0x12, 0x34, 0x56]; // CRC, counter, user data
@@ -229,8 +229,8 @@ fn benchmark_profile22(c: &mut Criterion) {
         ..Default::default()
     };
 
-    let mut sender = Profile22::new(config.clone());
-    let mut receiver = Profile22::new(config);
+    let mut sender = Profile22::new(config.clone()).unwrap();
+    let mut receiver = Profile22::new(config).unwrap();
 
     let mut group = c.benchmark_group("Profile22");
     let mut data = vec![0u8; 8]; // CRC, counter, user data
@@ -265,7 +265,7 @@ fn benchmark_all_profiles_comparison(c: &mut Criterion) {
         max_data_length: 32768,
         ..Default::default()
     };
-    let mut profile4 = Profile4::new(config4);
+    let mut profile4 = Profile4::new(config4).unwrap();
     let data4 = vec![0u8; 64];
 
     group.bench_function("Profile4_64B_protect", |b| {
@@ -282,7 +282,7 @@ fn benchmark_all_profiles_comparison(c: &mut Criterion) {
         max_delta_counter: 1,
         offset: 0,
     };
-    let mut profile5 = Profile5::new(config5);
+    let mut profile5 = Profile5::new(config5).unwrap();
     let data5 = vec![0u8; 8];
 
     group.bench_function("Profile5_8B_protect", |b| {
@@ -300,7 +300,7 @@ fn benchmark_all_profiles_comparison(c: &mut Criterion) {
         max_data_length: 4096 * 8,
         max_delta_counter: 5,
     };
-    let mut profile7 = Profile7::new(config7);
+    let mut profile7 = Profile7::new(config7).unwrap();
     let data7 = vec![0u8; 64];
 
     group.bench_function("Profile7_64B_protect", |b| {
@@ -317,7 +317,7 @@ fn benchmark_all_profiles_comparison(c: &mut Criterion) {
         data_length: 40,
         ..Default::default()
     };
-    let mut profile11 = Profile11::new(config11);
+    let mut profile11 = Profile11::new(config11).unwrap();
     let data11 = vec![0x00, 0x00, 0x12, 0x34, 0x56];
 
     group.bench_function("Profile11_5B_protect", |b| {

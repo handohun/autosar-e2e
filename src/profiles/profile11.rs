@@ -257,14 +257,14 @@ impl Profile11 {
 impl E2EProfile for Profile11 {
     type Config = Profile11Config;
 
-    fn new(config: Self::Config) -> Self {
-        // Validate config (panic if invalid in constructor for simplicity)
-        Self::validate_config(&config).expect("Invalid Profile11 configuration");
-        Self {
+    fn new(config: Self::Config) -> E2EResult<Self> {
+        // Validate config
+        Self::validate_config(&config)?;
+        Ok(Self {
             config,
             counter: 0,
             initialized: false,
-        }
+        })
     }
 
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()> {
@@ -312,8 +312,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile11::new(config.clone());
-        let mut profile_rx = Profile11::new(config);
+        let mut profile_tx = Profile11::new(config.clone()).unwrap();
+        let mut profile_rx = Profile11::new(config).unwrap();
 
         let mut data1 = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         profile_tx.protect(&mut data1).unwrap();
@@ -336,8 +336,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile11::new(config.clone());
-        let mut profile_rx = Profile11::new(config);
+        let mut profile_tx = Profile11::new(config.clone()).unwrap();
+        let mut profile_rx = Profile11::new(config).unwrap();
 
         let mut data1 = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         profile_tx.protect(&mut data1).unwrap();
@@ -362,8 +362,8 @@ mod tests {
             data_id: 0x123,
         };
 
-        let mut profile_tx = Profile11::new(config.clone());
-        let mut profile_rx = Profile11::new(config);
+        let mut profile_tx = Profile11::new(config.clone()).unwrap();
+        let mut profile_rx = Profile11::new(config).unwrap();
 
         let mut data1 = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -376,7 +376,7 @@ mod tests {
     }
     #[test]
     fn test_profile11_crc_error() {
-        let mut profile = Profile11::new(Profile11Config::default());
+        let mut profile = Profile11::new(Profile11Config::default()).unwrap();
         let mut data = vec![0x00; 8];
         profile.protect(&mut data).unwrap();
         data[0] ^= 0xFF;
@@ -384,7 +384,7 @@ mod tests {
     }
     #[test]
     fn test_profile11_counter_wraparound() {
-        let mut profile = Profile11::new(Profile11Config::default());
+        let mut profile = Profile11::new(Profile11Config::default()).unwrap();
         let mut data = vec![0x00; 8];
         for _ in 0..=COUNTER_MAX + 1 {
             profile.protect(&mut data).unwrap();
@@ -400,8 +400,8 @@ mod tests {
             max_delta_counter: 3,
             ..Default::default()
         };
-        let mut tx = Profile11::new(config.clone());
-        let mut rx = Profile11::new(config);
+        let mut tx = Profile11::new(config.clone()).unwrap();
+        let mut rx = Profile11::new(config).unwrap();
 
         let mut data = vec![0x00; 8];
         tx.protect(&mut data).unwrap();
@@ -418,8 +418,8 @@ mod tests {
             max_delta_counter: 1,
             ..Default::default()
         };
-        let mut tx = Profile11::new(config.clone());
-        let mut rx = Profile11::new(config);
+        let mut tx = Profile11::new(config.clone()).unwrap();
+        let mut rx = Profile11::new(config).unwrap();
 
         let mut data = vec![0x00; 8];
         tx.protect(&mut data).unwrap();
@@ -432,7 +432,7 @@ mod tests {
     }
     #[test]
     fn test_profile11_repeated_frame() {
-        let mut profile = Profile11::new(Profile11Config::default());
+        let mut profile = Profile11::new(Profile11Config::default()).unwrap();
         let mut profile_rx = profile.clone();
         let mut data = vec![0x00; 8];
         profile.protect(&mut data).unwrap();

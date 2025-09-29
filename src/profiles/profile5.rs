@@ -50,7 +50,7 @@ impl Default for Profile5Config {
 
 /// E2E Profile 5 Implementation
 ///
-/// Implements AUTOSAR E2E Profile 4 protection mechanism
+/// Implements AUTOSAR E2E Profile 5 protection mechanism
 #[derive(Clone)]
 pub struct Profile5 {
     config: Profile5Config,
@@ -159,14 +159,14 @@ impl Profile5 {
 impl E2EProfile for Profile5 {
     type Config = Profile5Config;
 
-    fn new(config: Self::Config) -> Self {
-        // Validate config (panic if invalid in constructor for simplicity)
-        Self::validate_config(&config).expect("Invalid Profile5 configuration");
-        Self {
+    fn new(config: Self::Config) -> E2EResult<Self> {
+        // Validate config
+        Self::validate_config(&config)?;
+        Ok(Self {
             config,
             counter: 0,
             initialized: false,
-        }
+        })
     }
 
     fn protect(&mut self, data: &mut [u8]) -> E2EResult<()> {
@@ -204,8 +204,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile5::new(config.clone());
-        let mut profile_rx = Profile5::new(config);
+        let mut profile_tx = Profile5::new(config.clone()).unwrap();
+        let mut profile_rx = Profile5::new(config).unwrap();
 
         let mut data = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         profile_tx.protect(&mut data).unwrap();
@@ -224,8 +224,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile5::new(config.clone());
-        let mut profile_rx = Profile5::new(config);
+        let mut profile_tx = Profile5::new(config.clone()).unwrap();
+        let mut profile_rx = Profile5::new(config).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -247,8 +247,8 @@ mod tests {
             ..Default::default()
         };
 
-        let mut profile_tx = Profile5::new(config.clone());
-        let mut profile_rx = Profile5::new(config);
+        let mut profile_tx = Profile5::new(config.clone()).unwrap();
+        let mut profile_rx = Profile5::new(config).unwrap();
 
         let mut data = vec![
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
